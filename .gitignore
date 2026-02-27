@@ -1,0 +1,40 @@
+# --- Python Bytecode & Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.protoc
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+bin/
+lib/
+include/
+
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# --- IDE & Editor Settings ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store (Mac)
+Thumbs.db (Windows)
+
+# --- Project Specific ---
+# Ignore local data/logs if you don't want them in GitHub
+logs/
+*.log
+temp/

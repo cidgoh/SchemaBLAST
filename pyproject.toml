@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schema_comparator"
+version = "0.1.0"
+description = "A modular tool for comparing various data schemas"
+dependencies = [
+    "requests",
+    "pyyaml",
+]
+
+[project.scripts]
+schema-compare = "schema_comparator.cli:main"
