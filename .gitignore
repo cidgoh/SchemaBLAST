@@ -39,3 +39,4 @@ logs/
 *.log
 temp/
 .env
+all_schema
