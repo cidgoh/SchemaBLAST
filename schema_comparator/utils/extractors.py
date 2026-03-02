@@ -1,47 +1,53 @@
-from typing import Dict, Set, Tuple
+from typing import Dict, List, Set, Optional
 
 class BaseExtractor:
-    """Base class for all future schema extractors."""
-    def extract(self, data: Dict) -> Dict:
-        """Returns a dict with 'attributes' (Set) and 'description' (Str)."""
-        raise NotImplementedError("Subclasses must implement extract()")
+    def extract(self, data: Dict) -> List[Dict]:
+        raise NotImplementedError
 
 class OCAExtractor(BaseExtractor):
-    """Extractor specifically for OCA (Overlay Capture Architecture) schemas."""
-    def extract(self, data: Dict) -> Dict:
+    """Handles standard OCA Layouts."""
+    def extract(self, data: Dict) -> List[Dict]:
         attributes = set()
-        
-        # 1. Extract Attributes from 'attributes' list
-        if 'attributes' in data and isinstance(data['attributes'], list):
-            for attr in data['attributes']:
-                if isinstance(attr, dict):
-                    name = attr.get('name')
+        # OCA logic: look for 'attributes' or 'properties'
+        if 'attributes' in data:
+            if isinstance(data['attributes'], list):
+                for attr in data['attributes']:
+                    name = attr.get('name') if isinstance(attr, dict) else attr
                     if name: attributes.add(name)
-                elif isinstance(attr, str):
-                    attributes.add(attr)
-        
-        # 2. Extract Attributes from 'properties' dictionary
-        if 'properties' in data and isinstance(data['properties'], dict):
+        elif 'properties' in data:
             attributes.update(data['properties'].keys())
             
-        # 3. Clean attributes
-        cleaned_attributes = {str(a).lower().strip() for a in attributes if a}
+        return [{
+            "name": data.get('name', 'Unnamed OCA'),
+            "attributes": {str(a).lower().strip() for a in attributes},
+            "description": data.get('description', "")
+        }]
 
-        # 4. Extract Description
-        # Looks for 'description' at the root level of the JSON
-        description = data.get('description', "")
-        if not isinstance(description, str):
-            description = str(description)
+class LinkMLExtractor(BaseExtractor):
+    """Handles LinkML files with multiple classes/slots."""
+    def extract(self, data: Dict) -> List[Dict]:
+        results = []
+        classes = data.get('classes', {})
+        for class_name, content in classes.items():
+            slots = content.get('slots', [])
+            if slots:
+                results.append({
+                    "name": class_name,
+                    "attributes": {str(s).lower().strip() for s in slots},
+                    "description": content.get('description', f"LinkML Class: {class_name}")
+                })
+        return results
 
-        return {
-            "attributes": cleaned_attributes,
-            "description": description.strip()
-        }
-
-class GenericJSONExtractor(BaseExtractor):
-    """Fallback extractor for standard JSON objects."""
-    def extract(self, data: Dict) -> Dict:
-        return {
-            "attributes": {str(k).lower().strip() for k in data.keys()},
-            "description": data.get('description', "Generic JSON Schema")
-        }
+class ExtractorFactory:
+    """Orchestrates which extractor to use."""
+    @staticmethod
+    def get_extractor(schema_format: str = "auto", data: Dict = None):
+        if schema_format == "oca":
+            return OCAExtractor()
+        if schema_format == "linkml":
+            return LinkMLExtractor()
+        
+        # Auto-detection logic
+        if data and 'classes' in data:
+            return LinkMLExtractor()
+        return OCAExtractor()
