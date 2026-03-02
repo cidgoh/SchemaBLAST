@@ -82,6 +82,7 @@ def main():
 
     probe = subparsers.add_parser("probe", help="Probe a local file")
     probe.add_argument("file"); probe.add_argument("--threshold", type=float, default=0.4); probe.add_argument("--limit", type=int, default=5); probe.add_argument("--format", default="auto")
+    probe.add_argument("--html", action="store_true", help="Generate an HTML report file")
 
     args = parser.parse_args()
     engine = ComparatorEngine()
@@ -104,6 +105,11 @@ def main():
         print(f"🔭 Probing local file: {args.file} against database...")
         matches, query_attrs = engine.probe_file(args.file, args.format, args.threshold, args.limit)
         print_matches(matches, query_attrs)
+        if args.html:
+            from .utils.branding import LOGO, LAB_INFO
+            from .utils.html_generator import generate_html_report
+            path = generate_html_report(matches, query_attrs, LOGO, LAB_INFO)
+            print(f"🌐 HTML report generated at: {path}")
 
 if __name__ == "__main__":
     main()
