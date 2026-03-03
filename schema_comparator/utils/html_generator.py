@@ -1,4 +1,5 @@
 import os
+import csv
 from datetime import datetime
 
 HTML_TEMPLATE = """
@@ -13,24 +14,42 @@ HTML_TEMPLATE = """
         .header {{ background: #f8f9fa; border: 1px solid #ddd; padding: 20px; margin-bottom: 30px; border-left: 5px solid #005596; }}
         .logo {{ font-family: monospace; white-space: pre; color: #005596; font-weight: bold; font-size: 12px; line-height: 1.2; }}
         .lab-info {{ font-size: 0.9em; color: #555; margin-top: 10px; }}
+        
+        /* Stats Banner */
+        .stats-banner {{ display: flex; justify-content: space-around; background: #005596; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }}
+        .stats-item b {{ display: block; font-size: 1.4em; }}
+        
+        /* Warning Block */
+        .warning-block {{ background: #fff3cd; color: #856404; padding: 15px; border: 1px solid #ffeeba; border-radius: 5px; margin-bottom: 20px; }}
+
+        /* Download Button */
+        .download-btn {{ 
+            display: inline-block; background: #28a745; color: white; padding: 10px 20px; 
+            text-decoration: none; border-radius: 4px; font-weight: bold; margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .download-btn:hover {{ background: #218838; }}
+
         .summary-table {{ width: 100%; border-collapse: collapse; margin-bottom: 40px; }}
         .summary-table th, .summary-table td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
         .summary-table th {{ background-color: #005596; color: white; }}
-        .match-card {{ border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
-        .match-title {{ background: #e9ecef; padding: 10px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between; }}
         
+        .match-card {{ border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+        .match-title {{ background: #e9ecef; padding: 10px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }}
+        
+        .quality-tag {{ padding: 4px 8px; border-radius: 4px; font-size: 0.8em; text-transform: uppercase; }}
+        .q-high {{ background: #d4edda; color: #155724; }}
+        .q-medium {{ background: #fff3cd; color: #856404; }}
+        .q-low {{ background: #f8d7da; color: #721c24; }}
+
         .section-header {{ margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-weight: bold; }}
         
-        /* Grid for Exact Matches */
         .attr-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; font-family: monospace; font-size: 0.85em; }}
         .attr-item {{ color: #28a745; background: #f0fff4; padding: 4px; border: 1px solid #c6f6d5; border-radius: 3px; }}
         
-        /* Fuzzy/Linguistic Mapping style */
-        .fuzzy-list {{ margin-top: 10px; }}
-        .fuzzy-item {{ font-family: monospace; font-size: 0.9em; color: #856404; background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 5px; border-radius: 4px; }}
-        .fuzzy-arrow {{ color: #d39e00; font-weight: bold; padding: 0 10px; }}
+        .fuzzy-item {{ font-family: monospace; font-size: 0.9em; color: #856404; background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; }}
+        .score-pill {{ background: #e67e22; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.8em; }}
         
-        /* Gaps style */
         .gap-item {{ color: #dc3545; background: #fff5f5; padding: 6px; border-radius: 4px; border: 1px solid #ffc9c9; margin: 5px 0; font-family: monospace; font-size: 0.9em; }}
         
         .footer {{ font-size: 0.8em; color: #888; text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; }}
@@ -43,6 +62,11 @@ HTML_TEMPLATE = """
         <div class="lab-info">{lab_info}</div>
     </div>
 
+    {stats_banner}
+    {warning_block}
+
+    <a href="{csv_filename}" class="download-btn" download>📥 Download Alignment CSV</a>
+
     <h3>Summary Alignment</h3>
     <p><strong>Query Size:</strong> {query_count} Attributes</p>
     <table class="summary-table">
@@ -50,6 +74,7 @@ HTML_TEMPLATE = """
             <tr>
                 <th>Target Schema</th>
                 <th>Identity Score</th>
+                <th>Quality</th>
                 <th>Total Coverage</th>
             </tr>
         </thead>
@@ -68,47 +93,86 @@ HTML_TEMPLATE = """
 </html>
 """
 
-def generate_html_report(matches, query_attributes, logo_text, lab_info, output_path="report.html"):
+def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, fuzzy_cutoff, output_path="report.html"):
     summary_rows = ""
     alignment_details = ""
+    
+    # Define CSV Path and prepare header
+    csv_filename = output_path.replace(".html", "_mapping.csv")
+    csv_rows = [["Target Schema", "Query Attribute", "Matched Attribute", "Confidence Score", "Match Type"]]
+
+    # Build Stats Banner
+    stats_banner = f"""
+    <div class="stats-banner">
+        <div class="stats-item"><b>{stats['total_schemas']}</b>Schemas Indexed</div>
+        <div class="stats-item"><b>{stats['unique_attributes']}</b>Global Attributes</div>
+        <div class="stats-item"><b>{stats['avg_attributes_per_schema']}</b>Avg. Attributes/Schema</div>
+    </div>
+    """
+
+    # Build Warning Block if cutoff is risky
+    warning_block = ""
+    if fuzzy_cutoff < 75:
+        warning_block = f"""
+        <div class="warning-block">
+            <strong>⚠️ EXTERNAL DATA WARNING:</strong> Fuzzy threshold set to {fuzzy_cutoff}%. 
+            Manual verification of Linguistic Mappings is highly recommended for partner data exchange.
+        </div>"""
 
     for m in matches:
         exact_matches = []
         fuzzy_matches = []
         matched_query_names = set()
 
-        # Categorize the attributes
-        for q_attr, t_attr in m.matching_attributes:
+        # Categorize attributes and populate CSV rows
+        for q_attr, t_attr, score in m.matching_attributes:
             matched_query_names.add(q_attr)
-            if q_attr == t_attr:
+            is_exact = (score == 100.0)
+            
+            csv_rows.append([
+                m.target_schema_name, 
+                q_attr, 
+                t_attr, 
+                f"{score}%", 
+                "Exact" if is_exact else "Fuzzy"
+            ])
+
+            if is_exact:
                 exact_matches.append(q_attr)
             else:
-                fuzzy_matches.append((q_attr, t_attr))
+                fuzzy_matches.append((q_attr, t_attr, score))
         
-        # Truly missing: items in query but not in the matched list
+        # Calculate gaps and add them to CSV
         unmatched = sorted([a for a in query_attributes if a not in matched_query_names])
-        total_matched_count = len(matched_query_names)
+        for gap_attr in unmatched:
+            csv_rows.append([m.target_schema_name, gap_attr, "NOT FOUND", "0%", "Gap"])
+
+        quality_class = f"q-{m.quality_label.lower()}"
         
         # Build Summary Row
-        summary_rows += f"<tr><td>{m.target_schema_name}</td><td><strong>{m.similarity_score:.1%}</strong></td><td>{total_matched_count} / {len(query_attributes)}</td></tr>"
+        summary_rows += f"""
+        <tr>
+            <td>{m.target_schema_name}</td>
+            <td><strong>{m.similarity_score:.1%}</strong></td>
+            <td><span class="quality-tag {quality_class}">{m.quality_label}</span></td>
+            <td>{len(matched_query_names)} / {len(query_attributes)}</td>
+        </tr>"""
 
-        # 1. Build Exact Matches HTML
+        # Build Details
         exact_html = "".join([f'<div class="attr-item">✅ {a}</div>' for a in sorted(exact_matches)])
         
-        # 2. Build Fuzzy Mapping HTML
         fuzzy_html = "".join([
-            f'<div class="fuzzy-item"><span>{q}</span> <span class="fuzzy-arrow">≈≈&gt;</span> <span>{t}</span></div>' 
-            for q, t in sorted(fuzzy_matches)
+            f'<div class="fuzzy-item"><span>{q} <b style="color:#d39e00;">≈≈></b> {t}</span> <span class="score-pill">{s}%</span></div>' 
+            for q, t, s in sorted(fuzzy_matches, key=lambda x: x[2], reverse=True)
         ])
 
-        # 3. Build Gaps HTML (True Gaps Only)
         gaps_html = "".join([f'<div class="gap-item">❌ MISSING: {a}</div>' for a in unmatched])
         
         alignment_details += f"""
         <div class="match-card">
             <div class="match-title">
-                <span>> {m.target_schema_name}</span>
-                <span>ID: {m.target_schema_id}</span>
+                <span>{m.target_schema_name} (ID: {m.target_schema_id})</span>
+                <span class="quality-tag {quality_class}">{m.quality_label} CONFIDENCE</span>
             </div>
             <p><strong>Identity Score:</strong> {m.similarity_score:.1%}</p>
             
@@ -123,10 +187,19 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, output_
         </div>
         """
 
+    # Write CSV file
+    with open(csv_filename, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerows(csv_rows)
+
+    # Final HTML assembly
     full_html = HTML_TEMPLATE.format(
         logo=logo_text.replace("\n", "<br>"),
         lab_info=lab_info.replace("\n", "<br>"),
         query_count=len(query_attributes),
+        stats_banner=stats_banner,
+        warning_block=warning_block,
+        csv_filename=os.path.basename(csv_filename), # Just the filename for the relative link
         summary_rows=summary_rows,
         alignment_details=alignment_details,
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")

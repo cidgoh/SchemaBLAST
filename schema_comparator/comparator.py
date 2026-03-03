@@ -10,7 +10,7 @@ from rapidfuzz import process, fuzz
 
 from .storage import SolrManager
 from .utils.extractors import ExtractorFactory
-from .utils.text_math import AttributeSimilarity, MatchResult # Ensure MatchResult is imported
+from .utils.text_math import AttributeSimilarity, MatchResult
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -32,6 +32,23 @@ class ComparatorEngine:
         except Exception as e:
             logger.error(f"Error loading {path}: {e}")
             return {}
+
+    def get_database_stats(self) -> Dict:
+        """Calculates global metrics for the report header."""
+        all_schemas = self.db.list_all() # Assumes this returns all indexed docs
+        total_schemas = len(all_schemas)
+        all_attrs = set()
+        total_count = 0
+        for s in all_schemas:
+            attrs = s.get('attributes', [])
+            all_attrs.update(attrs)
+            total_count += len(attrs)
+        
+        return {
+            "total_schemas": total_schemas,
+            "unique_attributes": len(all_attrs),
+            "avg_attributes_per_schema": round(total_count / total_schemas, 1) if total_schemas > 0 else 0
+        }
 
     def process_and_upload(self, file_path: str, schema_format: str = "auto", 
                            name_override: Optional[str] = None, 
@@ -68,7 +85,7 @@ class ComparatorEngine:
                 stats["schemas_indexed"] += len(ids)
         return stats
 
-    def find_similar_schemas(self, schema_id: str, threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List, Set[str]]:
+    def find_similar_schemas(self, schema_id: str, threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List[MatchResult], Set[str]]:
         source_data = self.db.get_schema(schema_id)
         if not source_data:
             logger.error(f"Source schema '{schema_id}' not found.")
@@ -77,7 +94,7 @@ class ComparatorEngine:
         source_attributes = set(source_data.get('attributes', []))
         return self._compare_against_db(source_attributes, schema_id, threshold, limit, fuzzy, fuzzy_cutoff), source_attributes
 
-    def probe_file(self, file_path: str, schema_format: str = "auto", threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List, Set[str]]:
+    def probe_file(self, file_path: str, schema_format: str = "auto", threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List[MatchResult], Set[str]]:
         path = Path(file_path)
         data = self._load_file_data(path)
         if not data: return [], set()
@@ -89,10 +106,9 @@ class ComparatorEngine:
         query_attrs = set(extracted[0]['attributes'])
         return self._compare_against_db(query_attrs, "local_file", threshold, limit, fuzzy, fuzzy_cutoff), query_attrs
 
-    def _compare_against_db(self, source_attributes: Set[str], source_id: str, threshold: float, limit: int, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> List:
+    def _compare_against_db(self, source_attributes: Set[str], source_id: str, threshold: float, limit: int, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> List[MatchResult]:
         if not source_attributes: return []
         
-        # Broad search to get candidates
         candidates = self.db.query_similar(list(source_attributes), limit=limit * 5)
         matches = []
         
@@ -106,34 +122,41 @@ class ComparatorEngine:
             target_attrs = cand.get('attributes', [])
             target_set = set(target_attrs)
             
-            matching_pairs = []
-
             if not fuzzy:
                 # --- EXACT MATCH LOGIC ---
-                common = source_attributes.intersection(target_set)
-                matching_pairs = [(attr, attr) for attr in common]
+                # Delegate to text_math for consistent Jaccard + Tuple creation
+                result = self.similarity_engine.calculate_similarity(
+                    source_attrs=source_attributes,
+                    target_attrs=target_set,
+                    source_id=source_id,
+                    target_id=cand_id,
+                    target_name=cand_name
+                )
+                if result.similarity_score >= threshold:
+                    matches.append(result)
             else:
                 # --- FUZZY MATCH LOGIC ---
-                # For each query attribute, find the best match in this specific candidate
+                matching_pairs = []
                 for q_attr in query_list:
-                    best_match = process.extractOne(
+                    res = process.extractOne(
                         q_attr, 
                         target_attrs, 
                         scorer=fuzz.token_sort_ratio
                     )
-                    if best_match and best_match[1] >= fuzzy_cutoff:
-                        matching_pairs.append((q_attr, best_match[0]))
-            
-            # Identity Score: How much of the QUERY is covered by the TARGET
-            identity_score = len(matching_pairs) / len(source_attributes)
+                    # res[0] = string, res[1] = score, res[2] = index
+                    if res and res[1] >= fuzzy_cutoff:
+                        matching_pairs.append((q_attr, res[0], round(float(res[1]), 1)))
+                
+                # Identity Score: Percentage of Query attributes matched
+                identity_score = len(matching_pairs) / len(source_attributes)
 
-            if identity_score >= threshold:
-                matches.append(MatchResult(
-                    target_schema_id=cand_id,
-                    target_schema_name=cand_name,
-                    similarity_score=identity_score,
-                    matching_attributes=matching_pairs
-                ))
+                if identity_score >= threshold:
+                    matches.append(MatchResult(
+                        target_schema_id=cand_id,
+                        target_schema_name=cand_name,
+                        similarity_score=identity_score,
+                        matching_attributes=matching_pairs
+                    ))
                 
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
         return matches[:limit]

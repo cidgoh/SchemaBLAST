@@ -3,24 +3,31 @@ from dataclasses import dataclass
 from typing import Set, List, Tuple, Optional
 
 @dataclass
-class MatchResult:  # Renamed from SimilarityResult to match comparator.py
-    """Structured result for schema comparison."""
+class MatchResult:
+    """Structured result for schema comparison used for CLI and HTML reports."""
     target_schema_id: str
     target_schema_name: str
     similarity_score: float
-    # List of tuples: (query_attribute, target_attribute)
-    matching_attributes: List[Tuple[str, str]]
+    # List of tuples: (query_attribute, target_attribute, fuzzy_confidence_score)
+    matching_attributes: List[Tuple[str, str, float]]
+
+    @property
+    def quality_label(self) -> str:
+        """Determines reliability for external partners based on coverage."""
+        if self.similarity_score >= 0.90:
+            return "HIGH"
+        if self.similarity_score >= 0.70:
+            return "MEDIUM"
+        return "LOW"
 
 class AttributeSimilarity:
     """Handles normalization and set-based similarity calculations."""
     
     @staticmethod
     def normalize(text: str) -> str:
-        """Basic text normalization for cleaner matching."""
         if not isinstance(text, str): 
             return ""
-        # Remove special characters, underscores, and lowercase
-        # This helps with basic matching before even hitting fuzzy logic
+        # Standardize for comparison: lower, no underscores/hyphens
         text = text.lower().replace('_', ' ').replace('-', ' ')
         text = re.sub(r'[^\w\s]', '', text)
         return text.strip()
@@ -34,20 +41,22 @@ class AttributeSimilarity:
         target_name: str = "Unknown"
     ) -> MatchResult:
         """
-        Calculates Jaccard Similarity between two sets of attributes.
-        Note: This is the 'Exact' logic. The 'Fuzzy' logic is handled 
-        directly in comparator.py using rapidfuzz.
+        Calculates Jaccard Similarity for Exact Matching.
+        Used when --fuzzy is NOT enabled.
         """
-        src_norm = {self.normalize(a) for a in source_attrs if a}
-        tgt_norm = {self.normalize(a) for a in target_attrs if a}
+        # Normalize sets to catch minor formatting differences as "Exact"
+        src_norm = {self.normalize(a): a for a in source_attrs if a}
+        tgt_norm = {self.normalize(a): a for a in target_attrs if a}
         
-        intersection = src_norm.intersection(tgt_norm)
-        union = src_norm.union(tgt_norm)
+        # Find intersection of normalized keys
+        common_keys = set(src_norm.keys()).intersection(set(tgt_norm.keys()))
+        union_keys = set(src_norm.keys()).union(set(tgt_norm.keys()))
         
-        score = len(intersection) / len(union) if union else 0.0
+        score = len(common_keys) / len(union_keys) if union_keys else 0.0
         
-        # We store matches as (attr, attr) because they are identical in this method
-        matching_details = [(attr, attr) for attr in sorted(list(intersection))]
+        # Map back to original attribute names for the report
+        # For exact matches, we pass 100.0 as the individual attribute score
+        matching_details = [(src_norm[k], tgt_norm[k], 100.0) for k in sorted(list(common_keys))]
         
         return MatchResult(
             target_schema_id=target_id or "unknown",
