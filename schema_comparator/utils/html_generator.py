@@ -74,7 +74,7 @@ HTML_TEMPLATE = """
             <tr>
                 <th>Target Schema</th>
                 <th>Identity Score</th>
-                <th>Quality</th>
+                <th>Similarity</th>
                 <th>Total Coverage</th>
             </tr>
         </thead>

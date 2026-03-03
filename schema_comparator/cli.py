@@ -34,7 +34,7 @@ def print_matches(matches, query_attributes, global_stats=None, fuzzy_cutoff=85.
     print("\n" + "="*95)
     print(f"      SCHEMA ALIGNMENT SUMMARY | QUERY SIZE: {query_count} ATTRIBUTES")
     print("="*95)
-    print(f"{'TARGET SCHEMA':<30} | {'SCORE':<8} | {'QUALITY':<10} | {'MATCHES'}")
+    print(f"{'TARGET SCHEMA':<30} | {'SCORE':<8} | {'SIMILARITY':<10} | {'MATCHES'}")
     print("-" * 95)
     for m in matches:
         print(f"{m.target_schema_name[:30]:<30} | {m.similarity_score:>7.1%} | {m.quality_label:<10} | {len(m.matching_attributes)} / {query_count} shared")
