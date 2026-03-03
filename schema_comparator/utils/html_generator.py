@@ -5,28 +5,41 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SchemaProber Alignment Report</title>
     <style>
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: auto; padding: 20px; }}
         .header {{ background: #f8f9fa; border: 1px solid #ddd; padding: 20px; margin-bottom: 30px; border-left: 5px solid #005596; }}
-        .logo {{ font-family: monospace; white-space: pre; color: #005596; font-weight: bold; font-size: 12px; }}
+        .logo {{ font-family: monospace; white-space: pre; color: #005596; font-weight: bold; font-size: 12px; line-height: 1.2; }}
         .lab-info {{ font-size: 0.9em; color: #555; margin-top: 10px; }}
         .summary-table {{ width: 100%; border-collapse: collapse; margin-bottom: 40px; }}
         .summary-table th, .summary-table td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
         .summary-table th {{ background-color: #005596; color: white; }}
-        .match-card {{ border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px; }}
+        .match-card {{ border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
         .match-title {{ background: #e9ecef; padding: 10px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between; }}
-        .attr-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; font-family: monospace; font-size: 0.9em; }}
-        .attr-item {{ color: #28a745; }}
-        .gap-item {{ color: #dc3545; background: #fff5f5; padding: 5px; border-radius: 3px; border: 1px solid #ffc9c9; margin: 5px 0; font-family: monospace; }}
+        
+        .section-header {{ margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-weight: bold; }}
+        
+        /* Grid for Exact Matches */
+        .attr-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; font-family: monospace; font-size: 0.85em; }}
+        .attr-item {{ color: #28a745; background: #f0fff4; padding: 4px; border: 1px solid #c6f6d5; border-radius: 3px; }}
+        
+        /* Fuzzy/Linguistic Mapping style */
+        .fuzzy-list {{ margin-top: 10px; }}
+        .fuzzy-item {{ font-family: monospace; font-size: 0.9em; color: #856404; background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 5px; border-radius: 4px; }}
+        .fuzzy-arrow {{ color: #d39e00; font-weight: bold; padding: 0 10px; }}
+        
+        /* Gaps style */
+        .gap-item {{ color: #dc3545; background: #fff5f5; padding: 6px; border-radius: 4px; border: 1px solid #ffc9c9; margin: 5px 0; font-family: monospace; font-size: 0.9em; }}
+        
         .footer {{ font-size: 0.8em; color: #888; text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; }}
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo">{logo}</div>
-        <h2>SchemaProber Report</h2>
+        <h2>SchemaProber Alignment Report</h2>
         <div class="lab-info">{lab_info}</div>
     </div>
 
@@ -37,7 +50,7 @@ HTML_TEMPLATE = """
             <tr>
                 <th>Target Schema</th>
                 <th>Identity Score</th>
-                <th>Common Attributes</th>
+                <th>Total Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -45,7 +58,7 @@ HTML_TEMPLATE = """
         </tbody>
     </table>
 
-    <h3>Detailed Alignments</h3>
+    <h3>Detailed Alignments & Linguistic Mapping</h3>
     {alignment_details}
 
     <div class="footer">
@@ -56,20 +69,39 @@ HTML_TEMPLATE = """
 """
 
 def generate_html_report(matches, query_attributes, logo_text, lab_info, output_path="report.html"):
-    query_set = set(query_attributes)
     summary_rows = ""
     alignment_details = ""
 
     for m in matches:
-        target_attrs = {attr[1] for attr in m.matching_attributes}
-        unmatched = sorted(list(query_set - target_attrs))
-        common_count = len(m.matching_attributes)
+        exact_matches = []
+        fuzzy_matches = []
+        matched_query_names = set()
+
+        # Categorize the attributes
+        for q_attr, t_attr in m.matching_attributes:
+            matched_query_names.add(q_attr)
+            if q_attr == t_attr:
+                exact_matches.append(q_attr)
+            else:
+                fuzzy_matches.append((q_attr, t_attr))
+        
+        # Truly missing: items in query but not in the matched list
+        unmatched = sorted([a for a in query_attributes if a not in matched_query_names])
+        total_matched_count = len(matched_query_names)
         
         # Build Summary Row
-        summary_rows += f"<tr><td>{m.target_schema_name}</td><td>{m.similarity_score:.1%}</td><td>{common_count} / {len(query_attributes)}</td></tr>"
+        summary_rows += f"<tr><td>{m.target_schema_name}</td><td><strong>{m.similarity_score:.1%}</strong></td><td>{total_matched_count} / {len(query_attributes)}</td></tr>"
 
-        # Build Details
-        shared_html = "".join([f'<div class="attr-item">✅ {a[0]}</div>' for a in sorted(m.matching_attributes)])
+        # 1. Build Exact Matches HTML
+        exact_html = "".join([f'<div class="attr-item">✅ {a}</div>' for a in sorted(exact_matches)])
+        
+        # 2. Build Fuzzy Mapping HTML
+        fuzzy_html = "".join([
+            f'<div class="fuzzy-item"><span>{q}</span> <span class="fuzzy-arrow">≈≈&gt;</span> <span>{t}</span></div>' 
+            for q, t in sorted(fuzzy_matches)
+        ])
+
+        # 3. Build Gaps HTML (True Gaps Only)
         gaps_html = "".join([f'<div class="gap-item">❌ MISSING: {a}</div>' for a in unmatched])
         
         alignment_details += f"""
@@ -78,10 +110,16 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, output_
                 <span>> {m.target_schema_name}</span>
                 <span>ID: {m.target_schema_id}</span>
             </div>
-            <p><strong>Similarity Score:</strong> {m.similarity_score:.1%}</p>
-            <div class="attr-grid">{shared_html}</div>
-            <h4 style="color:#dc3545;">Gaps Identified ({len(unmatched)})</h4>
-            <div>{gaps_html if gaps_html else '<em>No gaps found. Perfect match.</em>'}</div>
+            <p><strong>Identity Score:</strong> {m.similarity_score:.1%}</p>
+            
+            <div class="section-header" style="color:#28a745;">Exact Matches ({len(exact_matches)})</div>
+            <div class="attr-grid">{exact_html if exact_html else '<em>None</em>'}</div>
+
+            <div class="section-header" style="color:#856404;">Linguistic Mapping ({len(fuzzy_matches)})</div>
+            <div class="fuzzy-list">{fuzzy_html if fuzzy_html else '<em>No fuzzy matches found.</em>'}</div>
+
+            <div class="section-header" style="color:#dc3545;">True Gaps ({len(unmatched)})</div>
+            <div>{gaps_html if gaps_html else '<em>✨ Perfect coverage: No gaps found.</em>'}</div>
         </div>
         """
 

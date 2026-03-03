@@ -9,7 +9,8 @@ description = "A modular tool for comparing various data schemas"
 dependencies = [
     "requests",
     "pyyaml",
-    "dotenv"
+    "dotenv",
+    "rapidfuzz"
 
 ]
 

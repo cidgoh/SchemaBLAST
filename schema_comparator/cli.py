@@ -4,65 +4,125 @@ from datetime import datetime
 from .comparator import ComparatorEngine
 from .utils.branding import get_report_header
 
+# def print_matches(matches, query_attributes):
+#     """
+#     Report with Summary, Detailed Alignments, and Gap Analysis.
+#     """
+#     if not matches:
+#         print("🤷 No similar schemas found above the threshold.")
+#         return
+
+#     print(get_report_header(len(query_attributes)))
+    
+#     query_count = len(query_attributes)
+#     query_set = set(query_attributes)
+
+#     # --- SECTION 1: SUMMARY ---
+#     print("\n" + "="*95)
+#     print(f"      SCHEMA ALIGNMENT REPORT | QUERY SIZE: {query_count} ATTRIBUTES")
+#     print("="*95)
+#     print(f"{'MATCHING SCHEMA':<30} | {'SCORE':<8} | {'MATCHES'}")
+#     print("-" * 95)
+#     for m in matches:
+#         common_count = len(m.matching_attributes)
+#         print(f"{m.target_schema_name:<30} | {m.similarity_score:>6.1%} | {common_count} / {query_count} shared")
+
+#     # --- SECTION 2: DETAILED ALIGNMENTS & GAPS ---
+#     print("\n" + "="*95)
+#     print("      DETAILED ATTRIBUTE ALIGNMENTS & GAPS")
+#     print("="*95)
+
+#     for m in matches:
+#         # Attributes present in query but NOT in this specific target
+#         target_attrs = {attr[1] for attr in m.matching_attributes}
+#         unmatched = sorted(list(query_set - target_attrs))
+        
+#         print(f"\n> {m.target_schema_name} (ID: {m.target_schema_id})")
+#         print(f"  Score: {m.similarity_score:.1%} | Identity: {len(target_attrs)}/{query_count}")
+#         print("-" * 60)
+        
+#         # Shared Attributes
+#         common_names = sorted([attr[0] for attr in m.matching_attributes])
+#         print(f"  ✅ SHARED ATTRIBUTES ({len(common_names)}):")
+#         for i in range(0, len(common_names), 3):
+#             row = common_names[i:i+3]
+#             print(f"     " + "".join(f"{name:<30}" for name in row))
+        
+#         # Gap Visualization
+#         if unmatched:
+#             print(f"\n  ⚠️  GAPS IN ALIGNMENT (Fields in query missing from {m.target_schema_name}):")
+#             for attr in unmatched:
+#                 # Creative DNA-bridge style gap visualization
+#                 print(f"     [ QUERY ]---( x )---[ MISSING IN TARGET ] : {attr}")
+#         else:
+#             print(f"\n  ✨ PERFECT COVERAGE: No gaps found.")
+            
+#         print("\n" + "." * 95)
+
+#     # --- FOOTER ---
+#     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     print(f"\nReport Generated at: {timestamp}")
+#     print("="*95 + "\n")
+
+
 def print_matches(matches, query_attributes):
-    """
-    Report with Summary, Detailed Alignments, and Gap Analysis.
-    """
     if not matches:
         print("🤷 No similar schemas found above the threshold.")
         return
 
     print(get_report_header(len(query_attributes)))
-    
     query_count = len(query_attributes)
-    query_set = set(query_attributes)
 
     # --- SECTION 1: SUMMARY ---
-    print("\n" + "="*95)
-    print(f"      SCHEMA ALIGNMENT REPORT | QUERY SIZE: {query_count} ATTRIBUTES")
-    print("="*95)
-    print(f"{'MATCHING SCHEMA':<30} | {'SCORE':<8} | {'MATCHES'}")
-    print("-" * 95)
-    for m in matches:
-        common_count = len(m.matching_attributes)
-        print(f"{m.target_schema_name:<30} | {m.similarity_score:>6.1%} | {common_count} / {query_count} shared")
+    # (Keep your existing Summary table logic here...)
 
-    # --- SECTION 2: DETAILED ALIGNMENTS & GAPS ---
+    # --- SECTION 2: DETAILED ALIGNMENTS ---
     print("\n" + "="*95)
-    print("      DETAILED ATTRIBUTE ALIGNMENTS & GAPS")
+    print("      DETAILED ATTRIBUTE ALIGNMENTS & LINGUISTIC MAPPING")
     print("="*95)
 
     for m in matches:
-        # Attributes present in query but NOT in this specific target
-        target_attrs = {attr[1] for attr in m.matching_attributes}
-        unmatched = sorted(list(query_set - target_attrs))
+        # Categorize matches
+        exact_matches = []
+        fuzzy_matches = [] # List of (query, target)
         
+        matched_query_names = set()
+        for q_attr, t_attr in m.matching_attributes:
+            matched_query_names.add(q_attr)
+            if q_attr == t_attr:
+                exact_matches.append(q_attr)
+            else:
+                fuzzy_matches.append((q_attr, t_attr))
+        
+        # Truly missing = in query but not in matched_query_names
+        unmatched = sorted([a for a in query_attributes if a not in matched_query_names])
+
         print(f"\n> {m.target_schema_name} (ID: {m.target_schema_id})")
-        print(f"  Score: {m.similarity_score:.1%} | Identity: {len(target_attrs)}/{query_count}")
+        print(f"  Score: {m.similarity_score:.1%} | Identity: {len(matched_query_names)}/{query_count}")
         print("-" * 60)
-        
-        # Shared Attributes
-        common_names = sorted([attr[0] for attr in m.matching_attributes])
-        print(f"  ✅ SHARED ATTRIBUTES ({len(common_names)}):")
-        for i in range(0, len(common_names), 3):
-            row = common_names[i:i+3]
-            print(f"     " + "".join(f"{name:<30}" for name in row))
-        
-        # Gap Visualization
-        if unmatched:
-            print(f"\n  ⚠️  GAPS IN ALIGNMENT (Fields in query missing from {m.target_schema_name}):")
-            for attr in unmatched:
-                # Creative DNA-bridge style gap visualization
-                print(f"     [ QUERY ]---( x )---[ MISSING IN TARGET ] : {attr}")
-        else:
-            print(f"\n  ✨ PERFECT COVERAGE: No gaps found.")
-            
-        print("\n" + "." * 95)
 
-    # --- FOOTER ---
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"\nReport Generated at: {timestamp}")
-    print("="*95 + "\n")
+        # 1. Exact Matches
+        if exact_matches:
+            print(f"  ✅ EXACT MATCHES ({len(exact_matches)}):")
+            for i in range(0, len(exact_matches), 3):
+                row = sorted(exact_matches)[i:i+3]
+                print(f"     " + "".join(f"{name:<30}" for name in row))
+
+        # 2. Fuzzy Section (Linguistic Mapping)
+        if fuzzy_matches:
+            print(f"\n  🔍 LINGUISTIC MAPPING (Near-Matches):")
+            for q_attr, t_attr in sorted(fuzzy_matches):
+                print(f"     [ QUERY: {q_attr:<20} ] ≈≈> [ TARGET: {t_attr:<20} ]")
+
+        # 3. True Gaps
+        if unmatched:
+            print(f"\n  ❌ TRUE GAPS (No equivalent found):")
+            for attr in unmatched:
+                print(f"     [!] {attr}")
+        else:
+            print(f"\n  ✨ PERFECT COVERAGE: All fields accounted for.")
+
+        print("\n" + "." * 95)
 
 def main():
     parser = argparse.ArgumentParser(prog="schema-compare", description="CIDGOH SchemaProber: CLI tool to index and compare schemas.")
@@ -78,11 +138,21 @@ def main():
     subparsers.add_parser("list", help="List all schemas")
 
     comp = subparsers.add_parser("compare", help="Compare by ID")
-    comp.add_argument("schema_id"); comp.add_argument("--threshold", type=float, default=0.4); comp.add_argument("--limit", type=int, default=5)
+    comp.add_argument("schema_id"); 
+    comp.add_argument("--threshold", type=float, default=0.4);
+    comp.add_argument("--limit", type=int, default=5)
+    comp.add_argument("--fuzzy", action="store_true", help="Enable fuzzy attribute matching")
+    comp.add_argument("--fuzzy_cutoff", type=float, default=85.0, help="Similarity threshold 0-100 (default: 85)")
 
     probe = subparsers.add_parser("probe", help="Probe a local file")
-    probe.add_argument("file"); probe.add_argument("--threshold", type=float, default=0.4); probe.add_argument("--limit", type=int, default=5); probe.add_argument("--format", default="auto")
+    probe.add_argument("file")
+    probe.add_argument("--threshold", type=float, default=0.4) 
+    probe.add_argument("--limit", type=int, default=5)
+    probe.add_argument("--format", default="auto")
     probe.add_argument("--html", action="store_true", help="Generate an HTML report file")
+    probe.add_argument("--fuzzy", action="store_true", help="Enable fuzzy attribute matching")
+    probe.add_argument("--fuzzy_cutoff", type=float, default=85.0, help="Similarity threshold 0-100 (default: 85)")
+
 
     deleter = subparsers.add_parser("delete", help="Remove schemas")
     deleter.add_argument("schema_id", nargs="?", help="Schema ID to delete")
@@ -107,7 +177,14 @@ def main():
         print_matches(matches, query_attrs)
     elif args.command == "probe":
         print(f"🔭 Probing local file: {args.file} against database...")
-        matches, query_attrs = engine.probe_file(args.file, args.format, args.threshold, args.limit)
+        matches, query_attrs = engine.probe_file(
+            args.file, 
+            args.format, 
+            args.threshold, 
+            args.limit, 
+            fuzzy=args.fuzzy,
+            fuzzy_cutoff=args.fuzzy_cutoff  # Pass the new parameter
+        )
         print_matches(matches, query_attrs)
         if args.html:
             from .utils.branding import LOGO, LAB_INFO

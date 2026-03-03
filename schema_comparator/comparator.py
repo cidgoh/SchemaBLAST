@@ -6,10 +6,11 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 from dotenv import load_dotenv
+from rapidfuzz import process, fuzz
 
 from .storage import SolrManager
 from .utils.extractors import ExtractorFactory
-from .utils.text_math import AttributeSimilarity
+from .utils.text_math import AttributeSimilarity, MatchResult # Ensure MatchResult is imported
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -67,16 +68,16 @@ class ComparatorEngine:
                 stats["schemas_indexed"] += len(ids)
         return stats
 
-    def find_similar_schemas(self, schema_id: str, threshold: float = 0.4, limit: int = 5) -> Tuple[List, Set[str]]:
+    def find_similar_schemas(self, schema_id: str, threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List, Set[str]]:
         source_data = self.db.get_schema(schema_id)
         if not source_data:
             logger.error(f"Source schema '{schema_id}' not found.")
             return [], set()
 
         source_attributes = set(source_data.get('attributes', []))
-        return self._compare_against_db(source_attributes, schema_id, threshold, limit), source_attributes
+        return self._compare_against_db(source_attributes, schema_id, threshold, limit, fuzzy, fuzzy_cutoff), source_attributes
 
-    def probe_file(self, file_path: str, schema_format: str = "auto", threshold: float = 0.4, limit: int = 5) -> Tuple[List, Set[str]]:
+    def probe_file(self, file_path: str, schema_format: str = "auto", threshold: float = 0.4, limit: int = 5, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> Tuple[List, Set[str]]:
         path = Path(file_path)
         data = self._load_file_data(path)
         if not data: return [], set()
@@ -86,29 +87,57 @@ class ComparatorEngine:
         if not extracted: return [], set()
 
         query_attrs = set(extracted[0]['attributes'])
-        return self._compare_against_db(query_attrs, "local_file", threshold, limit), query_attrs
+        return self._compare_against_db(query_attrs, "local_file", threshold, limit, fuzzy, fuzzy_cutoff), query_attrs
 
-    def _compare_against_db(self, source_attributes: Set[str], source_id: str, threshold: float, limit: int) -> List:
+    def _compare_against_db(self, source_attributes: Set[str], source_id: str, threshold: float, limit: int, fuzzy: bool = False, fuzzy_cutoff: float = 85.0) -> List:
         if not source_attributes: return []
+        
+        # Broad search to get candidates
         candidates = self.db.query_similar(list(source_attributes), limit=limit * 5)
         matches = []
+        
+        query_list = list(source_attributes)
+
         for cand in candidates:
             cand_id = cand['schema_id'][0] if isinstance(cand['schema_id'], list) else cand['schema_id']
             if cand_id == source_id: continue
                 
             cand_name = cand['schema_name'][0] if isinstance(cand.get('schema_name'), list) else cand.get('schema_name', 'Unknown')
-            candidate_attrs = set(cand.get('attributes', []))
+            target_attrs = cand.get('attributes', [])
+            target_set = set(target_attrs)
             
-            result = self.similarity_engine.calculate_similarity(
-                source_attrs=source_attributes, target_attrs=candidate_attrs,
-                source_id=source_id, target_id=cand_id, target_name=cand_name
-            )
-            if result.similarity_score >= threshold:
-                matches.append(result)
+            matching_pairs = []
+
+            if not fuzzy:
+                # --- EXACT MATCH LOGIC ---
+                common = source_attributes.intersection(target_set)
+                matching_pairs = [(attr, attr) for attr in common]
+            else:
+                # --- FUZZY MATCH LOGIC ---
+                # For each query attribute, find the best match in this specific candidate
+                for q_attr in query_list:
+                    best_match = process.extractOne(
+                        q_attr, 
+                        target_attrs, 
+                        scorer=fuzz.token_sort_ratio
+                    )
+                    if best_match and best_match[1] >= fuzzy_cutoff:
+                        matching_pairs.append((q_attr, best_match[0]))
+            
+            # Identity Score: How much of the QUERY is covered by the TARGET
+            identity_score = len(matching_pairs) / len(source_attributes)
+
+            if identity_score >= threshold:
+                matches.append(MatchResult(
+                    target_schema_id=cand_id,
+                    target_schema_name=cand_name,
+                    similarity_score=identity_score,
+                    matching_attributes=matching_pairs
+                ))
                 
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
         return matches[:limit]
-    
+
     def remove_schema(self, schema_id: str) -> bool:
         return self.db.delete_by_id(schema_id)
 

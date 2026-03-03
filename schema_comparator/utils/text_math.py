@@ -3,11 +3,12 @@ from dataclasses import dataclass
 from typing import Set, List, Tuple, Optional
 
 @dataclass
-class SimilarityResult:
+class MatchResult:  # Renamed from SimilarityResult to match comparator.py
     """Structured result for schema comparison."""
     target_schema_id: str
     target_schema_name: str
     similarity_score: float
+    # List of tuples: (query_attribute, target_attribute)
     matching_attributes: List[Tuple[str, str]]
 
 class AttributeSimilarity:
@@ -18,9 +19,11 @@ class AttributeSimilarity:
         """Basic text normalization for cleaner matching."""
         if not isinstance(text, str): 
             return ""
-        # Remove special characters and lowercase
-        text = re.sub(r'[^\w\s]', ' ', text.lower())
-        return re.sub(r'\s+', ' ', text).strip()
+        # Remove special characters, underscores, and lowercase
+        # This helps with basic matching before even hitting fuzzy logic
+        text = text.lower().replace('_', ' ').replace('-', ' ')
+        text = re.sub(r'[^\w\s]', '', text)
+        return text.strip()
 
     def calculate_similarity(
         self, 
@@ -29,28 +32,24 @@ class AttributeSimilarity:
         source_id: Optional[str] = None,
         target_id: Optional[str] = None,
         target_name: str = "Unknown"
-    ) -> SimilarityResult:
+    ) -> MatchResult:
         """
         Calculates Jaccard Similarity between two sets of attributes.
-        Formula: (Size of Intersection) / (Size of Union)
+        Note: This is the 'Exact' logic. The 'Fuzzy' logic is handled 
+        directly in comparator.py using rapidfuzz.
         """
-        # Ensure we are working with normalized sets for better matching
         src_norm = {self.normalize(a) for a in source_attrs if a}
         tgt_norm = {self.normalize(a) for a in target_attrs if a}
         
-        # Calculate Intersection (Common attributes)
         intersection = src_norm.intersection(tgt_norm)
-        # Calculate Union (Total unique attributes across both)
         union = src_norm.union(tgt_norm)
         
-        # Jaccard Score
         score = len(intersection) / len(union) if union else 0.0
         
-        # Prepare the list of matching attribute names for the CLI display
-        # We return them as a list of tuples to keep the CLI logic happy
+        # We store matches as (attr, attr) because they are identical in this method
         matching_details = [(attr, attr) for attr in sorted(list(intersection))]
         
-        return SimilarityResult(
+        return MatchResult(
             target_schema_id=target_id or "unknown",
             target_schema_name=target_name,
             similarity_score=score,
