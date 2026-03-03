@@ -40,3 +40,9 @@ logs/
 temp/
 .env
 all_schema
+
+# Ignore files starting with "result"
+result*
+
+# Ignore files starting with "report"
+report*
