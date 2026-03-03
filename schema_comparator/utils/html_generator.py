@@ -19,6 +19,11 @@ HTML_TEMPLATE = """
         .stats-banner {{ display: flex; justify-content: space-around; background: #005596; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }}
         .stats-item b {{ display: block; font-size: 1.4em; }}
         
+        /* Query Criteria Block */
+        .criteria-block {{ background: #eef2f7; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; border: 1px solid #d1d9e6; }}
+        .criteria-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 5px; }}
+        .criteria-item b {{ color: #005596; }}
+
         /* Warning Block */
         .warning-block {{ background: #fff3cd; color: #856404; padding: 15px; border: 1px solid #ffeeba; border-radius: 5px; margin-bottom: 20px; }}
 
@@ -63,12 +68,23 @@ HTML_TEMPLATE = """
     </div>
 
     {stats_banner}
+
+    <div class="criteria-block">
+        <strong>Query Criteria:</strong>
+        <div class="criteria-grid">
+            <div class="criteria-item"><b>Query Size:</b> {query_count} Attributes</div>
+            <div class="criteria-item"><b>Identity Threshold:</b> {threshold}</div>
+            <div class="criteria-item"><b>Result Limit:</b> {limit}</div>
+            <div class="criteria-item"><b>Fuzzy Matching:</b> {fuzzy_enabled}</div>
+            {fuzzy_detail}
+        </div>
+    </div>
+
     {warning_block}
 
     <a href="{csv_filename}" class="download-btn" download>📥 Download Alignment CSV</a>
 
     <h3>Summary Alignment</h3>
-    <p><strong>Query Size:</strong> {query_count} Attributes</p>
     <table class="summary-table">
         <thead>
             <tr>
@@ -93,10 +109,15 @@ HTML_TEMPLATE = """
 </html>
 """
 
-def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, fuzzy_cutoff, output_path="report.html"):
+def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
+                         threshold, limit, fuzzy_enabled, fuzzy_cutoff, output_path="report.html"):
     summary_rows = ""
     alignment_details = ""
     
+    # Ensure proper extension
+    if not output_path.endswith(".html"):
+        output_path += ".html"
+
     # Define CSV Path and prepare header
     csv_filename = output_path.replace(".html", "_mapping.csv")
     csv_rows = [["Target Schema", "Query Attribute", "Matched Attribute", "Confidence Score", "Match Type"]]
@@ -112,7 +133,7 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
 
     # Build Warning Block if cutoff is risky
     warning_block = ""
-    if fuzzy_cutoff < 75:
+    if fuzzy_cutoff < 75 and fuzzy_enabled:
         warning_block = f"""
         <div class="warning-block">
             <strong>⚠️ EXTERNAL DATA WARNING:</strong> Fuzzy threshold set to {fuzzy_cutoff}%. 
@@ -124,7 +145,6 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
         fuzzy_matches = []
         matched_query_names = set()
 
-        # Categorize attributes and populate CSV rows
         for q_attr, t_attr, score in m.matching_attributes:
             matched_query_names.add(q_attr)
             is_exact = (score == 100.0)
@@ -142,14 +162,12 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
             else:
                 fuzzy_matches.append((q_attr, t_attr, score))
         
-        # Calculate gaps and add them to CSV
         unmatched = sorted([a for a in query_attributes if a not in matched_query_names])
         for gap_attr in unmatched:
             csv_rows.append([m.target_schema_name, gap_attr, "NOT FOUND", "0%", "Gap"])
 
         quality_class = f"q-{m.quality_label.lower()}"
         
-        # Build Summary Row
         summary_rows += f"""
         <tr>
             <td>{m.target_schema_name}</td>
@@ -158,14 +176,11 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
             <td>{len(matched_query_names)} / {len(query_attributes)}</td>
         </tr>"""
 
-        # Build Details
         exact_html = "".join([f'<div class="attr-item">✅ {a}</div>' for a in sorted(exact_matches)])
-        
         fuzzy_html = "".join([
             f'<div class="fuzzy-item"><span>{q} <b style="color:#d39e00;">≈≈></b> {t}</span> <span class="score-pill">{s}%</span></div>' 
             for q, t, s in sorted(fuzzy_matches, key=lambda x: x[2], reverse=True)
         ])
-
         gaps_html = "".join([f'<div class="gap-item">❌ MISSING: {a}</div>' for a in unmatched])
         
         alignment_details += f"""
@@ -187,25 +202,29 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
         </div>
         """
 
-    # Write CSV file
     with open(csv_filename, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerows(csv_rows)
 
-    # Final HTML assembly
+    # Dynamic fuzzy detail line
+    f_detail = f'<div class="criteria-item"><b>Fuzzy Cutoff:</b> {fuzzy_cutoff}%</div>' if fuzzy_enabled else ""
+
     full_html = HTML_TEMPLATE.format(
         logo=logo_text.replace("\n", "<br>"),
         lab_info=lab_info.replace("\n", "<br>"),
         query_count=len(query_attributes),
+        threshold=f"{threshold*100}%",
+        limit=limit,
+        fuzzy_enabled="Yes" if fuzzy_enabled else "No",
+        fuzzy_detail=f_detail,
         stats_banner=stats_banner,
         warning_block=warning_block,
-        csv_filename=os.path.basename(csv_filename), # Just the filename for the relative link
+        csv_filename=os.path.basename(csv_filename),
         summary_rows=summary_rows,
         alignment_details=alignment_details,
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     )
-    if not output_path.endswith(".html"):
-        output_path += ".html"
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(full_html)
     

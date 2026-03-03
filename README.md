@@ -1,27 +1,28 @@
-🧬 SchemaProber
+🧬 SchemaProber: Schema Alignment Tool
 
-CIDGOH Schema Alignment Tool
-Hsiao Lab | Centre for Infectious Disease Genomics and One Health
+**Hsiao Lab | Centre for Infectious Disease Genomics and One Health (CIDGOH)**
 
-SchemaProber is a Python utility designed for extracting,
-indexing, and auditing data schemas. It allows researchers to “probe”
-new datasets against established standards (such as OCA or LinkML) using
-alignment reports to identify attribute overlap and critical data gaps.
+[![GitHub Repo](https://img.shields.io/badge/GitHub-schema--prober-blue?logo=github)](https://github.com/cidgoh/schema-prober)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-------------------------------------------------------------------------
-
-🚀 Key Features
-
--   Alignment Reports
--   Gap Analysis visualization
--   Schema-BLAST style probing (no pre-indexing required)
--   Modular architecture (JSON/YAML extractors, Solr-backed search)
--   Similarity scoring using Jaccard Similarity and Levenshtein distance
+SchemaProber is a Python utility designed for extracting, indexing, and auditing data schemas. It allows researchers to “probe” new datasets against established standards (such as OCA or LinkML) using alignment reports to identify attribute overlap and critical data gaps.
 
 ------------------------------------------------------------------------
 
+## 🚀 Key Features
 
-📐 Identity Score (Jaccard Similarity)
+- **Hybrid Alignment Reports**: Combines Exact matches with Fuzzy linguistic mapping.
+- **Linguistic Mapping**: Uses Levenshtein-based fuzzy logic to find semantically similar fields (e.g., `case_id` ≈ `caseid`).
+- **Gap Analysis**: Visualizes exactly which fields in your query are missing from the target standard.
+- **Global Database Stats**: Real-time summary of the total indexed schema landscape.
+- **Flexible Output**: Support for terminal summaries, standalone HTML reports, and raw CSV mappings.
+
+------------------------------------------------------------------------
+
+## 📐 dentity Score (Jaccard Similarity)
+
+
 
 The Identity Score measures how similar two schemas are overall.
 
@@ -46,84 +47,96 @@ Note:
 
 The tool reports the Jaccard score as the Identity Score. A higher Identity Score indicates better coverage of your dataset by the target standard.
 
+## 📐 Similarity Confidence
 
-🛠 Installation
+Matches are categorized by "Similarity" (High, Medium, Low) based on the linguistic distance between attributes when fuzzy matching is enabled.  
 
-Prerequisites
+ The criteria are defined in the ComparatorEngine logic using the following thresholds:
 
--   Python 3.8+
--   Apache Solr (running at http://localhost:8983)
+   | Confidence Label | Identity Score Range | Interpretation |
+   |------------------|----------------------|---------------|
+   | **HIGH** | > 75% | Excellent alignment. The schemas are nearly identical or the standard covers almost all query fields. |
+   | **MEDIUM** | 40% – 75% | Moderate alignment. Significant overlap exists, but there are notable gaps or structural differences. |
+   | **LOW** | < 40% | Poor alignment. Only a few fields match; the schemas likely serve different purposes or data domains. |
 
-Local Setup
+## 🛠 Installation
 
-Clone the repository:
+### Prerequisites
+- Python 3.8+
+- Apache Solr (Default: `http://localhost:8983`)
 
-    git clone https://github.com/cidgoh/schema-prober.git
-    cd schema-prober
+### Setup
 
-Install in editable mode:
-
-    pip install -e .
-
-------------------------------------------------------------------------
-
-📖 Usage
-
-1. Probe a Local File
-
-Generate a console report:
-
-    schema-compare probe ./my_schemas/mpox_v2.yaml
-
-Generate a HTML report:
-
-    schema-compare probe ./my_schemas/mpox_v2.yaml --html
+```bash
+git clone https://github.com/cidgoh/schema-prober.git
+cd schema-prober
+pip install -e .
 
 ------------------------------------------------------------------------
 
-2. Find Similar Schemas (ID Search)
+📖 Usage Examples
+-----------------
 
-    schema-compare compare schema_abc12345
+### 1\. Probing with Fuzzy Matching (Linguistic Mapping)
 
-------------------------------------------------------------------------
+To catch fields that are named slightly differently, use the --fuzzy flag. You can tune the sensitivity with --fuzzy\_cutoff (default is 85.0).
 
-3. Database Management
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Bashschema-compare probe query.yaml --fuzzy --fuzzy_cutoff 90.0   `
 
-List all indexed schemas:
+### 2\. Generating Professional Reports
 
-    schema-compare list
+Generate a standalone HTML report and an accompanying CSV mapping file for data curators.
 
-Index a new schema:
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Bash# Saves to default 'report.html' and 'report_mapping.csv'  schema-compare probe query.yaml --html  # Specify a custom location  schema-compare probe query.yaml --html exports/mpox_audit.html   `
 
-    schema-compare upload ./standard_schema.yml
+### 3\. Saving Terminal Output to a File
 
-Delete a specific schema:
+If you want to keep a text-based audit log of the terminal summary:
 
-    schema-compare delete schema_57a13d45abee
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Bashschema-compare probe query.yaml -o alignment_summary.txt   `
 
-Wipe the entire database:
+📊 Alignment Report Anatomy
+---------------------------
 
-    schema-compare delete --all
+When running a probe, the report is divided into three sections:
 
-------------------------------------------------------------------------
+*   **Database Stats**: Overview of the current indexing environment.
+    
+*   **Summary Table**: High-level comparison of Identity Scores and Similarity Confidence.
+    
+*   **Detailed Alignments**:
+    
+    *   ✅ **Exact Matches**: Fields that match 1:1.
+        
+    *   🔍 **Linguistic Mapping**: Near-matches found via fuzzy logic (e.g., lab\_result ≈ lab\_results).
+        
+    *   ❌ **True Gaps**: Fields in your query that have no equivalent in the target schema.
+        
 
-📊 Alignment Report Example
+📝 CLI Reference
+----------------
 
-  MpoxInternational (ID: schema_33b855bfb07d)
-  Score: 57.3% | Identity: 102/117
-  ———————————————————— SHARED ATTRIBUTES (102): anatomical_material
-  anatomical_part antiviral_therapy …
+**CommandArgumentDescription**uploadfileIndex a new schema into the database.listNoneList all currently indexed schemas and their IDs.probefileCompare a local file against everything in the database.deleteidRemove a specific schema (use --all to wipe DB).
 
-GAPS IN ALIGNMENT (Fields in query missing from target): [ QUERY ]—( x
-)—[ MISSING IN TARGET ] : gene_name_1 [ QUERY ]—( x )—[ MISSING IN
-TARGET ] : gene_name_2
+### Flags for probe & compare:
 
-------------------------------------------------------------------------
+*   \-o, --output: Path to save the text summary.
+    
+*   \--html: Path to save the HTML report.
+    
+*   \--fuzzy: Enable linguistic near-matching.
+    
+*   \--fuzzy\_cutoff: Set the sensitivity (0-100).
+    
+*   \--threshold: Minimum Identity Score to show a schema in results (default 0.4).
+    
 
-📝 License
+🤝 Contact
+----------
 
-Distributed under the MIT License. See LICENSE for more information.
+*   **Jun Duan**: [jun\_duan@sfu.ca](mailto:jun_duan@sfu.ca)
+    
+*   **William Hsiao**: [wwhsiao@sfu.ca](mailto:wwhsiao@sfu.ca)
+    
 
-Contact: jun_duan@sfu.ca 
-         wwhsiao@sfu.ca
-Website: https://www.cidgoh.ca
+**Web**: [www.cidgoh.ca](https://www.cidgoh.ca/)

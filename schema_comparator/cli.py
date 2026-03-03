@@ -150,7 +150,18 @@ def main():
         
         # 1. Handle HTML Generation
         if args.html:
-            path = generate_html_report(matches, query_attrs, LOGO, LAB_INFO, stats, args.fuzzy_cutoff, output_path=args.html)
+            path = generate_html_report(
+                matches, 
+                query_attrs, 
+                LOGO, 
+                LAB_INFO, 
+                stats, 
+                threshold=args.threshold,
+                limit=args.limit,
+                fuzzy_enabled=args.fuzzy,
+                fuzzy_cutoff=args.fuzzy_cutoff,
+                output_path=args.html
+            )
             print(f"🌐 HTML report and CSV mapping generated at: {path}")
 
         # 2. Handle Text Output (File or Screen)
