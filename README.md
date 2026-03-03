@@ -20,7 +20,7 @@ SchemaProber is a Python utility designed for extracting, indexing, and auditing
 
 ------------------------------------------------------------------------
 
-## 📐 dentity Score (Jaccard Similarity)
+## 📐 Identity Score (Jaccard Similarity)
 
 
 
