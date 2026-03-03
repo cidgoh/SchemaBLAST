@@ -20,6 +20,33 @@ alignment reports to identify attribute overlap and critical data gaps.
 
 ------------------------------------------------------------------------
 
+
+📐 Identity Score (Jaccard Similarity)
+
+The Identity Score measures how similar two schemas are overall.
+
+It uses Jaccard Similarity (Intersection over Union):
+
+Score = (Attributes in BOTH) / (Total UNIQUE attributes in EITHER)
+
+Example
+
+Query (Q): 117 attributes
+Common (Q ∩ T): 100 attributes
+Target (T): 143 attributes
+
+Union = 117 + 143 - 100 = 160
+
+Score = 100 / 160 = 0.625 (62.5%)
+
+Note:
+
+-   100 / 117 = 85.5% → Coverage of your query
+-   100 / 160 = 62.5% → True schema similarity (Jaccard Score)
+
+The tool reports the Jaccard score as the Identity Score. A higher Identity Score indicates better coverage of your dataset by the target standard.
+
+
 🛠 Installation
 
 Prerequisites
