@@ -6,7 +6,7 @@ from .utils.branding import get_report_header
 
 def print_matches(matches, query_attributes):
     """
-    NCBI-style report with Summary, Detailed Alignments, and Gap Analysis.
+    Report with Summary, Detailed Alignments, and Gap Analysis.
     """
     if not matches:
         print("🤷 No similar schemas found above the threshold.")
@@ -65,7 +65,7 @@ def print_matches(matches, query_attributes):
     print("="*95 + "\n")
 
 def main():
-    parser = argparse.ArgumentParser(prog="schema-compare", description="CLI tool to index and compare schemas.")
+    parser = argparse.ArgumentParser(prog="schema-compare", description="CIDGOH SchemaProber: CLI tool to index and compare schemas.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # ... (Keep Upload and Batch parsers as they were) ...
@@ -83,6 +83,10 @@ def main():
     probe = subparsers.add_parser("probe", help="Probe a local file")
     probe.add_argument("file"); probe.add_argument("--threshold", type=float, default=0.4); probe.add_argument("--limit", type=int, default=5); probe.add_argument("--format", default="auto")
     probe.add_argument("--html", action="store_true", help="Generate an HTML report file")
+
+    deleter = subparsers.add_parser("delete", help="Remove schemas")
+    deleter.add_argument("schema_id", nargs="?", help="Schema ID to delete")
+    deleter.add_argument("--all", action="store_true", help="Delete all schemas")
 
     args = parser.parse_args()
     engine = ComparatorEngine()
@@ -110,6 +114,15 @@ def main():
             from .utils.html_generator import generate_html_report
             path = generate_html_report(matches, query_attrs, LOGO, LAB_INFO)
             print(f"🌐 HTML report generated at: {path}")
-
+    if args.command == "delete":
+        if args.all:
+            confirm = input("⚠️  Wipe ALL schemas? (y/N): ")
+            if confirm.lower() == 'y' and engine.clear_all_data():
+                print("💥 Database wiped.")
+        elif args.schema_id:
+            if engine.remove_schema(args.schema_id):
+                print(f"🗑️  Deleted: {args.schema_id}")
+            else:
+                print(f"❌ Deletion failed.")
 if __name__ == "__main__":
     main()

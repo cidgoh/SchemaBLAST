@@ -85,3 +85,27 @@ class SolrManager:
         except Exception as e:
             logger.error(f"Failed to list schemas: {e}")
             return []
+    
+    def delete_by_id(self, schema_id: str) -> bool:
+        """Removes a single schema from the index using HTTP POST."""
+        try:
+            # Solr expects a 'delete' command in the body
+            payload = {"delete": {"id": schema_id}}
+            r = requests.post(f"{self.url}/update?commit=true", json=payload, timeout=10)
+            r.raise_for_status()
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting schema {schema_id}: {e}")
+            return False
+
+    def delete_all(self) -> bool:
+        """Wipes the entire index using HTTP POST."""
+        try:
+            # Solr expects a 'delete' command with a 'query' for all documents
+            payload = {"delete": {"query": "*:*"}}
+            r = requests.post(f"{self.url}/update?commit=true", json=payload, timeout=10)
+            r.raise_for_status()
+            return True
+        except Exception as e:
+            logger.error(f"Error wiping index: {e}")
+            return False

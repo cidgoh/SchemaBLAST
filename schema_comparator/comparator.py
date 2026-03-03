@@ -108,3 +108,9 @@ class ComparatorEngine:
                 
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
         return matches[:limit]
+    
+    def remove_schema(self, schema_id: str) -> bool:
+        return self.db.delete_by_id(schema_id)
+
+    def clear_all_data(self) -> bool:
+        return self.db.delete_all()

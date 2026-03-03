@@ -1,108 +1,102 @@
-# Schema Comparator
+🧬 SchemaProber
 
-A modular, professional Python tool for extracting, indexing, and
-comparing data schemas. Originally built for OCA (Overlays Capture
-Architecture), this tool is designed to be extensible to support SQL,
-GraphQL, and other schema formats.
+CIDGOH Schema Alignment Tool
+Hsiao Lab | Centre for Infectious Disease Genomics and One Health
 
-------------------------------------------------------------------------
-
-## 🚀 Features
-
--   **Modular Architecture**: Separate layers for data extraction,
-    storage (Solr), and business logic.
--   **Multi-Format Support**: Handles JSON and YAML out of the box.
--   **Similarity Scoring**: Uses Levenshtein distance and Jaccard
-    similarity to find matching attributes across different schemas.
--   **Extensible Extractors**: Easy-to-add support for new schema types.
--   **CLI Ready**: Installable as a system-wide command.
+SchemaProber is a Python utility designed for extracting,
+indexing, and auditing data schemas. It allows researchers to “probe”
+new datasets against established standards (such as OCA or LinkML) using
+alignment reports to identify attribute overlap and critical data gaps.
 
 ------------------------------------------------------------------------
 
-## 🛠 Installation
+🚀 Key Features
 
-### Prerequisites
+-   Alignment Reports
+-   Gap Analysis visualization
+-   Schema-BLAST style probing (no pre-indexing required)
+-   Modular architecture (JSON/YAML extractors, Solr-backed search)
+-   Similarity scoring using Jaccard Similarity and Levenshtein distance
+
+------------------------------------------------------------------------
+
+🛠 Installation
+
+Prerequisites
 
 -   Python 3.8+
--   Apache Solr (Running at `http://localhost:8984`)
+-   Apache Solr (running at http://localhost:8983)
 
-### Local Setup
+Local Setup
 
-1.  Clone the repository:
+Clone the repository:
 
-``` bash
-git clone https://github.com/your-repo/schema-comparator.git
-cd schema-comparator
-```
+    git clone https://github.com/cidgoh/schema-prober.git
+    cd schema-prober
 
-2.  Install in editable mode:
+Install in editable mode:
 
-``` bash
-pip install -e .
-```
+    pip install -e .
 
 ------------------------------------------------------------------------
 
-## 📖 Usage
+📖 Usage
 
-Once installed, you can use the `schema-compare` command directly.
+1. Probe a Local File
 
-### 1. Upload/Index a Schema
+Generate a console report:
 
-Extracts attributes from a file and stores them in Solr.
+    schema-compare probe ./my_schemas/mpox_v2.yaml
 
-``` bash
-schema-compare upload ./my_schemas/user_profile.json --name "User Profile V1"
-```
+Generate a HTML report:
 
-### 2. Find Similar Schemas
-
-Search for schemas in the database that share similar attributes.
-
-``` bash
-schema-compare find schema_abc12345 --threshold 0.5
-```
-
-### 3. List All Schemas
-
-``` bash
-schema-compare list
-```
+    schema-compare probe ./my_schemas/mpox_v2.yaml --html
 
 ------------------------------------------------------------------------
 
-## 🏗 Project Structure
+2. Find Similar Schemas (ID Search)
 
-    schema_comparator/
-    ├── utils/
-    │   ├── extractors.py   # Logic to parse different schema types
-    │   └── text_math.py    # Similarity algorithms (Levenshtein, etc.)
-    ├── storage.py          # Solr database communication
-    ├── comparator.py       # Core logic orchestrator
-    ├── models.py           # Data structures (Dataclasses)
-    └── cli.py              # Argument parsing and terminal output
+    schema-compare compare schema_abc12345
 
 ------------------------------------------------------------------------
 
-## 🔧 Extending the Tool
+3. Database Management
 
-To support a new schema type (e.g., SQL DDL), follow these steps:
+List all indexed schemas:
 
-1.  Open `schema_comparator/utils/extractors.py`.
-2.  Create a new class inheriting from `BaseExtractor`:
+    schema-compare list
 
-``` python
-class SQLExtractor(BaseExtractor):
-    def extract(self, data: str) -> Set[str]:
-        # Add logic to parse SQL and return a set of column names
-        return {"column1", "column2"}
-```
+Index a new schema:
 
-3.  Update the `ComparatorEngine` in `comparator.py` to use your new
-    extractor based on the file extension.
+    schema-compare upload ./standard_schema.yml
+
+Delete a specific schema:
+
+    schema-compare delete schema_57a13d45abee
+
+Wipe the entire database:
+
+    schema-compare delete --all
 
 ------------------------------------------------------------------------
 
-## 📝 License
+📊 Alignment Report Example
 
-Distributed under the MIT License. See `LICENSE` for more information.
+  MpoxInternational (ID: schema_33b855bfb07d)
+  Score: 57.3% | Identity: 102/117
+  ———————————————————— SHARED ATTRIBUTES (102): anatomical_material
+  anatomical_part antiviral_therapy …
+
+GAPS IN ALIGNMENT (Fields in query missing from target): [ QUERY ]—( x
+)—[ MISSING IN TARGET ] : gene_name_1 [ QUERY ]—( x )—[ MISSING IN
+TARGET ] : gene_name_2
+
+------------------------------------------------------------------------
+
+📝 License
+
+Distributed under the MIT License. See LICENSE for more information.
+
+Contact: jun_duan@sfu.ca 
+         wwhsiao@sfu.ca
+Website: https://www.cidgoh.ca
