@@ -5,6 +5,7 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SchemaProber Alignment Report</title>
     <style>
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: auto; padding: 20px; }}
