@@ -1,0 +1,352 @@
+
+  ______  _____  ______      ______     ___   ____  ____
+ .' ___  ||_   _||_   _ `.  .' ___  |  .'   `.|_   ||   _|
+/ .'   \_|  | |    | | `. \/ .'   \_| /  .-.  \ | |__| |
+| |         | |    | |  | || |  ____ | |   | | |  __  |
+\ `.___.'\ _| |_  _| |_.' /\ `.___]  |\  `-'  /_| |  | |_
+ `.____ .'|_____||______.'  `._____.'  `.___.'|____||____|
+
+===============================================================================================
+     SCHEMAPROBER - SCHEMA MANAGEMENT TOOL (v0.1)
+===============================================================================================
+
+Hsiao Lab | Centre for Infectious Disease Genomics and One Health (CIDGOH)
+Faculty of Health Sciences, Simon Fraser University | Blusson Hall 
+8888 University Dr., Burnaby, B.C. V5A 1S6
+E-mail: wwhsiao@sfu.ca | Tel: +1-778-782-3299 | Web: www.cidgoh.ca
+===============================================================================================
+
+===============================================================================================
+ DATABASE STATS: 26 Schemas | 1376 Unique Attributes | Avg: 145.2 fields/schema
+===============================================================================================
+
+===============================================================================================
+      SCHEMA ALIGNMENT SUMMARY | QUERY SIZE: 117 ATTRIBUTES
+===============================================================================================
+TARGET SCHEMA                  | SCORE    | SIMILARITY | MATCHES
+-----------------------------------------------------------------------------------------------
+Mpox                           |   98.3% | HIGH       | 116 / 117 shared
+CanCOGeNCovid19                |   61.5% | LOW        | 99 / 117 shared
+MpoxInternational              |   56.4% | LOW        | 101 / 117 shared
+PHA4GE                         |   54.7% | LOW        | 93 / 117 shared
+Influenza                      |   53.8% | LOW        | 70 / 117 shared
+
+===============================================================================================
+      DETAILED ATTRIBUTE ALIGNMENTS & LINGUISTIC MAPPING
+===============================================================================================
+
+> Mpox (ID: schema_57a13d45abee)
+  Confidence: HIGH | Identity Score: 98.3%
+------------------------------------------------------------
+  ✅ EXACT MATCHES (116):
+     amplicon_pcr_primer_scheme    amplicon_size                 anatomical_material           
+     anatomical_part               antiviral_therapy             authors                       
+     bioinformatics_protocol       bioproject_accession          biosample_accession           
+     body_product                  breadth_of_coverage_value     collection_device             
+     collection_method             complications                 consensus_genome_length       
+     consensus_sequence_filename   consensus_sequence_filepath   consensus_sequence_name       
+     consensus_sequence_software_nameconsensus_sequence_software_versiondataharmonizer_provenance     
+     dehosting_method              depth_of_coverage_threshold   depth_of_coverage_value       
+     destination_of_most_recent_travel_citydestination_of_most_recent_travel_countrydestination_of_most_recent_travel_state_province_territory
+     diagnostic_pcr_ct_value_1     diagnostic_pcr_ct_value_2     diagnostic_pcr_ct_value_3     
+     diagnostic_pcr_ct_value_4     diagnostic_pcr_ct_value_5     experimental_control_details  
+     experimental_specimen_role_typeexposure_contact_level        exposure_details              
+     exposure_event                exposure_setting              fast5_filename                
+     fast5_filepath                gene_name_1                   gene_name_2                   
+     gene_name_3                   gene_name_4                   gene_name_5                   
+     geo_loc_name_country          geo_loc_name_state_province_territorygisaid_accession              
+     host_age                      host_age_bin                  host_age_unit                 
+     host_common_name              host_disease                  host_gender                   
+     host_health_outcome           host_health_state             host_health_status_details    
+     host_residence_geo_loc_name_countryhost_residence_geo_loc_name_state_province_territoryhost_role                     
+     host_scientific_name          host_vaccination_status       insdc_assembly_accession      
+     insdc_sequence_read_accession isolate_id                    library_id                    
+     library_preparation_kit       location_of_exposure_geo_loc_name_countrymost_recent_travel_departure_date
+     most_recent_travel_return_datenml_submitted_specimen_type   number_of_base_pairs_sequenced
+     number_of_vaccine_doses_receivedorganism                      preexisting_conditions_and_risk_factors
+     prior_antiviral_treatment_during_prior_mpox_infectionprior_mpox_antiviral_treatmentprior_mpox_infection          
+     prior_mpox_infection_date     purpose_of_sampling           purpose_of_sampling_details   
+     purpose_of_sequencing         purpose_of_sequencing_details r1_fastq_filename             
+     r1_fastq_filepath             r2_fastq_filename             r2_fastq_filepath             
+     raw_sequence_data_processing_methodreference_genome_accession    related_specimen_primary_id   
+     related_specimen_relationship_typesample_collected_by           sample_collection_date        
+     sample_collection_date_precisionsample_collector_contact_addresssample_collector_contact_email
+     sample_received_date          sequence_submitted_by         sequence_submitter_contact_address
+     sequence_submitter_contact_emailsequenced_by                  sequenced_by_contact_address  
+     sequenced_by_contact_email    sequencing_date               sequencing_instrument         
+     sequencing_kit_number         sequencing_protocol           signs_and_symptoms            
+     specimen_collector_sample_id  specimen_processing           specimen_processing_details   
+     symptom_onset_date            travel_history                vaccination_dose_1_vaccination_date
+     vaccination_dose_1_vaccine_namevaccination_history           
+
+  ❌ TRUE GAPS (No equivalent found):
+     [!] caseid
+
+...............................................................................................
+
+> CanCOGeNCovid19 (ID: schema_9ed182584f1a)
+  Confidence: LOW | Identity Score: 61.5%
+------------------------------------------------------------
+  ✅ EXACT MATCHES (99):
+     amplicon_pcr_primer_scheme    amplicon_size                 anatomical_material           
+     anatomical_part               authors                       bioinformatics_protocol       
+     bioproject_accession          biosample_accession           body_product                  
+     breadth_of_coverage_value     collection_device             collection_method             
+     complications                 consensus_genome_length       consensus_sequence_filename   
+     consensus_sequence_filepath   consensus_sequence_name       consensus_sequence_software_name
+     consensus_sequence_software_versiondataharmonizer_provenance     dehosting_method              
+     depth_of_coverage_threshold   depth_of_coverage_value       destination_of_most_recent_travel_city
+     destination_of_most_recent_travel_countrydestination_of_most_recent_travel_state_province_territorydiagnostic_pcr_ct_value_1     
+     diagnostic_pcr_ct_value_2     diagnostic_pcr_ct_value_3     exposure_contact_level        
+     exposure_details              exposure_event                exposure_setting              
+     fast5_filename                fast5_filepath                gene_name_1                   
+     gene_name_2                   gene_name_3                   geo_loc_name_country          
+     geo_loc_name_state_province_territorygisaid_accession              host_age                      
+     host_age_bin                  host_age_unit                 host_common_name              
+     host_disease                  host_gender                   host_health_outcome           
+     host_health_state             host_health_status_details    host_residence_geo_loc_name_country
+     host_residence_geo_loc_name_state_province_territoryhost_role                     host_scientific_name          
+     host_vaccination_status       library_id                    library_preparation_kit       
+     location_of_exposure_geo_loc_name_countrymost_recent_travel_departure_datemost_recent_travel_return_date
+     nml_submitted_specimen_type   number_of_base_pairs_sequencednumber_of_vaccine_doses_received
+     organism                      preexisting_conditions_and_risk_factorspurpose_of_sampling           
+     purpose_of_sampling_details   purpose_of_sequencing         purpose_of_sequencing_details 
+     r1_fastq_filename             r1_fastq_filepath             r2_fastq_filename             
+     r2_fastq_filepath             raw_sequence_data_processing_methodreference_genome_accession    
+     related_specimen_primary_id   related_specimen_relationship_typesample_collected_by           
+     sample_collection_date        sample_collection_date_precisionsample_collector_contact_address
+     sample_collector_contact_emailsample_received_date          sequence_submitted_by         
+     sequence_submitter_contact_addresssequence_submitter_contact_emailsequencing_date               
+     sequencing_instrument         sequencing_kit_number         sequencing_protocol           
+     signs_and_symptoms            specimen_collector_sample_id  specimen_processing           
+     specimen_processing_details   symptom_onset_date            travel_history                
+     vaccination_dose_1_vaccination_datevaccination_dose_1_vaccine_namevaccination_history           
+
+  ❌ TRUE GAPS (No equivalent found):
+     [!] antiviral_therapy
+     [!] caseid
+     [!] diagnostic_pcr_ct_value_4
+     [!] diagnostic_pcr_ct_value_5
+     [!] experimental_control_details
+     [!] experimental_specimen_role_type
+     [!] gene_name_4
+     [!] gene_name_5
+     [!] insdc_assembly_accession
+     [!] insdc_sequence_read_accession
+     [!] isolate_id
+     [!] prior_antiviral_treatment_during_prior_mpox_infection
+     [!] prior_mpox_antiviral_treatment
+     [!] prior_mpox_infection
+     [!] prior_mpox_infection_date
+     [!] sequenced_by
+     [!] sequenced_by_contact_address
+     [!] sequenced_by_contact_email
+
+...............................................................................................
+
+> MpoxInternational (ID: schema_33b855bfb07d)
+  Confidence: LOW | Identity Score: 56.4%
+------------------------------------------------------------
+  ✅ EXACT MATCHES (101):
+     amplicon_pcr_primer_scheme    amplicon_size                 anatomical_material           
+     anatomical_part               antiviral_therapy             authors                       
+     bioinformatics_protocol       bioproject_accession          biosample_accession           
+     body_product                  breadth_of_coverage_value     collection_device             
+     collection_method             complications                 consensus_genome_length       
+     consensus_sequence_software_nameconsensus_sequence_software_versiondataharmonizer_provenance     
+     dehosting_method              depth_of_coverage_threshold   depth_of_coverage_value       
+     destination_of_most_recent_travel_citydestination_of_most_recent_travel_countrydestination_of_most_recent_travel_state_province_territory
+     diagnostic_pcr_ct_value_1     diagnostic_pcr_ct_value_2     diagnostic_pcr_ct_value_3     
+     experimental_control_details  experimental_specimen_role_typeexposure_contact_level        
+     exposure_details              exposure_event                exposure_setting              
+     fast5_filename                fast5_filepath                geo_loc_name_country          
+     geo_loc_name_state_province_territorygisaid_accession              host_age                      
+     host_age_bin                  host_age_unit                 host_common_name              
+     host_disease                  host_gender                   host_health_outcome           
+     host_health_state             host_health_status_details    host_residence_geo_loc_name_country
+     host_role                     host_scientific_name          host_vaccination_status       
+     insdc_assembly_accession      insdc_sequence_read_accession isolate_id                    
+     library_id                    library_preparation_kit       location_of_exposure_geo_loc_name_country
+     most_recent_travel_departure_datemost_recent_travel_return_datenumber_of_base_pairs_sequenced
+     number_of_vaccine_doses_receivedorganism                      preexisting_conditions_and_risk_factors
+     prior_antiviral_treatment_during_prior_mpox_infectionprior_mpox_antiviral_treatmentprior_mpox_infection          
+     prior_mpox_infection_date     purpose_of_sampling           purpose_of_sampling_details   
+     purpose_of_sequencing         purpose_of_sequencing_details r1_fastq_filename             
+     r1_fastq_filepath             r2_fastq_filename             r2_fastq_filepath             
+     raw_sequence_data_processing_methodreference_genome_accession    sample_collected_by           
+     sample_collection_date        sample_collector_contact_addresssample_collector_contact_email
+     sample_received_date          sequence_submitted_by         sequence_submitter_contact_address
+     sequence_submitter_contact_emailsequenced_by                  sequenced_by_contact_address  
+     sequenced_by_contact_email    sequencing_date               sequencing_instrument         
+     sequencing_kit_number         sequencing_protocol           signs_and_symptoms            
+     specimen_collector_sample_id  specimen_processing           specimen_processing_details   
+     symptom_onset_date            travel_history                vaccination_dose_1_vaccination_date
+     vaccination_dose_1_vaccine_namevaccination_history           
+
+  ❌ TRUE GAPS (No equivalent found):
+     [!] caseid
+     [!] consensus_sequence_filename
+     [!] consensus_sequence_filepath
+     [!] consensus_sequence_name
+     [!] diagnostic_pcr_ct_value_4
+     [!] diagnostic_pcr_ct_value_5
+     [!] gene_name_1
+     [!] gene_name_2
+     [!] gene_name_3
+     [!] gene_name_4
+     [!] gene_name_5
+     [!] host_residence_geo_loc_name_state_province_territory
+     [!] nml_submitted_specimen_type
+     [!] related_specimen_primary_id
+     [!] related_specimen_relationship_type
+     [!] sample_collection_date_precision
+
+...............................................................................................
+
+> PHA4GE (ID: schema_174e5b978f35)
+  Confidence: LOW | Identity Score: 54.7%
+------------------------------------------------------------
+  ✅ EXACT MATCHES (93):
+     amplicon_pcr_primer_scheme    amplicon_size                 anatomical_material           
+     anatomical_part               authors                       bioinformatics_protocol       
+     bioproject_accession          biosample_accession           body_product                  
+     breadth_of_coverage_value     collection_device             collection_method             
+     complications                 consensus_genome_length       consensus_sequence_filename   
+     consensus_sequence_filepath   consensus_sequence_name       consensus_sequence_software_name
+     consensus_sequence_software_versiondataharmonizer_provenance     dehosting_method              
+     depth_of_coverage_threshold   depth_of_coverage_value       destination_of_most_recent_travel_city
+     destination_of_most_recent_travel_countrydestination_of_most_recent_travel_state_province_territorydiagnostic_pcr_ct_value_1     
+     diagnostic_pcr_ct_value_2     exposure_contact_level        exposure_details              
+     exposure_event                exposure_setting              fast5_filename                
+     fast5_filepath                gene_name_1                   gene_name_2                   
+     geo_loc_name_country          geo_loc_name_state_province_territorygisaid_accession              
+     host_age                      host_age_bin                  host_age_unit                 
+     host_common_name              host_disease                  host_gender                   
+     host_health_outcome           host_health_state             host_health_status_details    
+     host_residence_geo_loc_name_countryhost_role                     host_scientific_name          
+     host_vaccination_status       isolate_id                    library_id                    
+     library_preparation_kit       location_of_exposure_geo_loc_name_countrymost_recent_travel_departure_date
+     most_recent_travel_return_datenumber_of_base_pairs_sequencednumber_of_vaccine_doses_received
+     organism                      preexisting_conditions_and_risk_factorspurpose_of_sampling           
+     purpose_of_sampling_details   purpose_of_sequencing         purpose_of_sequencing_details 
+     r1_fastq_filename             r1_fastq_filepath             r2_fastq_filename             
+     r2_fastq_filepath             raw_sequence_data_processing_methodreference_genome_accession    
+     sample_collected_by           sample_collection_date        sample_collector_contact_address
+     sample_collector_contact_emailsample_received_date          sequence_submitted_by         
+     sequence_submitter_contact_addresssequence_submitter_contact_emailsequencing_date               
+     sequencing_instrument         sequencing_kit_number         sequencing_protocol           
+     signs_and_symptoms            specimen_collector_sample_id  specimen_processing           
+     specimen_processing_details   symptom_onset_date            travel_history                
+     vaccination_dose_1_vaccination_datevaccination_dose_1_vaccine_namevaccination_history           
+
+  ❌ TRUE GAPS (No equivalent found):
+     [!] antiviral_therapy
+     [!] caseid
+     [!] diagnostic_pcr_ct_value_3
+     [!] diagnostic_pcr_ct_value_4
+     [!] diagnostic_pcr_ct_value_5
+     [!] experimental_control_details
+     [!] experimental_specimen_role_type
+     [!] gene_name_3
+     [!] gene_name_4
+     [!] gene_name_5
+     [!] host_residence_geo_loc_name_state_province_territory
+     [!] insdc_assembly_accession
+     [!] insdc_sequence_read_accession
+     [!] nml_submitted_specimen_type
+     [!] prior_antiviral_treatment_during_prior_mpox_infection
+     [!] prior_mpox_antiviral_treatment
+     [!] prior_mpox_infection
+     [!] prior_mpox_infection_date
+     [!] related_specimen_primary_id
+     [!] related_specimen_relationship_type
+     [!] sample_collection_date_precision
+     [!] sequenced_by
+     [!] sequenced_by_contact_address
+     [!] sequenced_by_contact_email
+
+...............................................................................................
+
+> Influenza (ID: schema_eb2331457fe0)
+  Confidence: LOW | Identity Score: 53.8%
+------------------------------------------------------------
+  ✅ EXACT MATCHES (70):
+     amplicon_pcr_primer_scheme    amplicon_size                 anatomical_material           
+     anatomical_part               authors                       bioinformatics_protocol       
+     bioproject_accession          biosample_accession           body_product                  
+     breadth_of_coverage_value     collection_device             collection_method             
+     consensus_genome_length       consensus_sequence_software_nameconsensus_sequence_software_version
+     dataharmonizer_provenance     dehosting_method              depth_of_coverage_threshold   
+     depth_of_coverage_value       diagnostic_pcr_ct_value_1     diagnostic_pcr_ct_value_2     
+     diagnostic_pcr_ct_value_3     exposure_contact_level        exposure_details              
+     exposure_event                exposure_setting              gene_name_1                   
+     gene_name_2                   gene_name_3                   geo_loc_name_country          
+     geo_loc_name_state_province_territorygisaid_accession              host_age                      
+     host_age_bin                  host_age_unit                 host_common_name              
+     host_disease                  host_gender                   host_health_outcome           
+     host_health_state             host_health_status_details    host_role                     
+     host_scientific_name          host_vaccination_status       isolate_id                    
+     library_preparation_kit       nml_submitted_specimen_type   number_of_base_pairs_sequenced
+     organism                      purpose_of_sampling           purpose_of_sampling_details   
+     purpose_of_sequencing         purpose_of_sequencing_details raw_sequence_data_processing_method
+     reference_genome_accession    related_specimen_primary_id   related_specimen_relationship_type
+     sample_collected_by           sample_collection_date        sample_collection_date_precision
+     sample_collector_contact_emailsequence_submitted_by         sequenced_by                  
+     sequencing_date               sequencing_instrument         sequencing_protocol           
+     specimen_collector_sample_id  specimen_processing           specimen_processing_details   
+     vaccination_history           
+
+  ❌ TRUE GAPS (No equivalent found):
+     [!] antiviral_therapy
+     [!] caseid
+     [!] complications
+     [!] consensus_sequence_filename
+     [!] consensus_sequence_filepath
+     [!] consensus_sequence_name
+     [!] destination_of_most_recent_travel_city
+     [!] destination_of_most_recent_travel_country
+     [!] destination_of_most_recent_travel_state_province_territory
+     [!] diagnostic_pcr_ct_value_4
+     [!] diagnostic_pcr_ct_value_5
+     [!] experimental_control_details
+     [!] experimental_specimen_role_type
+     [!] fast5_filename
+     [!] fast5_filepath
+     [!] gene_name_4
+     [!] gene_name_5
+     [!] host_residence_geo_loc_name_country
+     [!] host_residence_geo_loc_name_state_province_territory
+     [!] insdc_assembly_accession
+     [!] insdc_sequence_read_accession
+     [!] library_id
+     [!] location_of_exposure_geo_loc_name_country
+     [!] most_recent_travel_departure_date
+     [!] most_recent_travel_return_date
+     [!] number_of_vaccine_doses_received
+     [!] preexisting_conditions_and_risk_factors
+     [!] prior_antiviral_treatment_during_prior_mpox_infection
+     [!] prior_mpox_antiviral_treatment
+     [!] prior_mpox_infection
+     [!] prior_mpox_infection_date
+     [!] r1_fastq_filename
+     [!] r1_fastq_filepath
+     [!] r2_fastq_filename
+     [!] r2_fastq_filepath
+     [!] sample_collector_contact_address
+     [!] sample_received_date
+     [!] sequence_submitter_contact_address
+     [!] sequence_submitter_contact_email
+     [!] sequenced_by_contact_address
+     [!] sequenced_by_contact_email
+     [!] sequencing_kit_number
+     [!] signs_and_symptoms
+     [!] symptom_onset_date
+     [!] travel_history
+     [!] vaccination_dose_1_vaccination_date
+     [!] vaccination_dose_1_vaccine_name
+
+...............................................................................................
+
+Report Generated at: 2026-03-02 19:18:32
+===============================================================================================
+

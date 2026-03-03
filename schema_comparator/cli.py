@@ -50,7 +50,6 @@ def print_matches(matches, query_attributes, global_stats=None, fuzzy_cutoff=85.
         
         matched_query_names = set()
         
-        # FIX: Unpack 3 values (q_attr, t_attr, score)
         for q_attr, t_attr, score in m.matching_attributes:
             matched_query_names.add(q_attr)
             if score == 100.0:
@@ -64,20 +63,17 @@ def print_matches(matches, query_attributes, global_stats=None, fuzzy_cutoff=85.
         print(f"  Confidence: {m.quality_label} | Identity Score: {m.similarity_score:.1%}")
         print("-" * 60)
 
-        # 1. Exact Matches
         if exact_matches:
             print(f"  ✅ EXACT MATCHES ({len(exact_matches)}):")
             for i in range(0, len(exact_matches), 3):
                 row = sorted(exact_matches)[i:i+3]
                 print(f"     " + "".join(f"{name:<30}" for name in row))
 
-        # 2. Fuzzy Section (Linguistic Mapping)
         if fuzzy_matches:
             print(f"\n  🔍 LINGUISTIC MAPPING (Near-Matches):")
             for q_attr, t_attr, score in sorted(fuzzy_matches, key=lambda x: x[2], reverse=True):
                 print(f"     [ QUERY: {q_attr:<20} ] ≈≈> [ TARGET: {t_attr:<20} ] ({score}%)")
 
-        # 3. True Gaps
         if unmatched:
             print(f"\n  ❌ TRUE GAPS (No equivalent found):")
             for attr in unmatched:
@@ -97,36 +93,30 @@ def main():
 
     # Upload
     up = subparsers.add_parser("upload", help="Index a new schema")
-    up.add_argument("file")
-    up.add_argument("--name")
-    up.add_argument("--description", default="")
-    up.add_argument("--format", default="auto")
+    up.add_argument("file"); up.add_argument("--name"); up.add_argument("--description", default=""); up.add_argument("--format", default="auto")
 
     # Batch
     batch = subparsers.add_parser("batch", help="Import a directory")
-    batch.add_argument("directory")
-    batch.add_argument("--format", default="auto")
+    batch.add_argument("directory"); batch.add_argument("--format", default="auto")
 
     # List
     subparsers.add_parser("list", help="List all schemas")
 
+    # Shared args for Compare/Probe
+    shared_logic = argparse.ArgumentParser(add_help=False)
+    shared_logic.add_argument("--threshold", type=float, default=0.4)
+    shared_logic.add_argument("--limit", type=int, default=5)
+    shared_logic.add_argument("--fuzzy", action="store_true", help="Enable fuzzy matching")
+    shared_logic.add_argument("--fuzzy_cutoff", type=float, default=85.0)
+    shared_logic.add_argument("-o", "--output", help="Save text summary to a file")
+    shared_logic.add_argument("--html", nargs='?', const='report.html', help="Generate HTML report (optional: specify filename.html)")
+
     # Compare
-    comp = subparsers.add_parser("compare", help="Compare by ID")
-    comp.add_argument("schema_id")
-    comp.add_argument("--threshold", type=float, default=0.4)
-    comp.add_argument("--limit", type=int, default=5)
-    comp.add_argument("--fuzzy", action="store_true", help="Enable fuzzy attribute matching")
-    comp.add_argument("--fuzzy_cutoff", type=float, default=85.0)
+    subparsers.add_parser("compare", parents=[shared_logic], help="Compare by ID").add_argument("schema_id")
 
     # Probe
-    probe = subparsers.add_parser("probe", help="Probe a local file")
-    probe.add_argument("file")
-    probe.add_argument("--threshold", type=float, default=0.4) 
-    probe.add_argument("--limit", type=int, default=5)
-    probe.add_argument("--format", default="auto")
-    probe.add_argument("--html", action="store_true", help="Generate an HTML report and CSV mapping")
-    probe.add_argument("--fuzzy", action="store_true", help="Enable fuzzy attribute matching")
-    probe.add_argument("--fuzzy_cutoff", type=float, default=85.0)
+    p_cmd = subparsers.add_parser("probe", parents=[shared_logic], help="Probe a local file")
+    p_cmd.add_argument("file"); p_cmd.add_argument("--format", default="auto")
 
     # Delete
     deleter = subparsers.add_parser("delete", help="Remove schemas")
@@ -146,48 +136,43 @@ def main():
 
     elif args.command == "list":
         schemas = engine.db.list_all()
-        print(f"\n{'ID':<20} | {'SCHEMA NAME'}")
-        print("-" * 50)
-        for s in schemas: 
-            print(f"{s.get('schema_id'):<20} | {s.get('schema_name')}")
+        for s in schemas: print(f"{s.get('schema_id'):<20} | {s.get('schema_name')}")
 
-    elif args.command == "compare":
+    elif args.command in ["compare", "probe"]:
         stats = engine.get_database_stats()
-        print(f"🔍 Analyzing similarity for ID: {args.schema_id}...")
-        matches, query_attrs = engine.find_similar_schemas(
-            args.schema_id, args.threshold, args.limit, 
-            fuzzy=args.fuzzy, fuzzy_cutoff=args.fuzzy_cutoff
-        )
-        print_matches(matches, query_attrs, global_stats=stats, fuzzy_cutoff=args.fuzzy_cutoff)
-
-    elif args.command == "probe":
-        stats = engine.get_database_stats()
-        print(f"🔭 Probing local file: {args.file} against database...")
-        matches, query_attrs = engine.probe_file(
-            args.file, 
-            args.format, 
-            args.threshold, 
-            args.limit, 
-            fuzzy=args.fuzzy,
-            fuzzy_cutoff=args.fuzzy_cutoff
-        )
         
+        if args.command == "compare":
+            print(f"🔍 Analyzing ID: {args.schema_id}...")
+            matches, query_attrs = engine.find_similar_schemas(args.schema_id, args.threshold, args.limit, args.fuzzy, args.fuzzy_cutoff)
+        else:
+            print(f"🔭 Probing file: {args.file}...")
+            matches, query_attrs = engine.probe_file(args.file, args.format, args.threshold, args.limit, args.fuzzy, args.fuzzy_cutoff)
+        
+        # 1. Handle HTML Generation
         if args.html:
-            path = generate_html_report(matches, query_attrs, LOGO, LAB_INFO, stats, args.fuzzy_cutoff)
+            path = generate_html_report(matches, query_attrs, LOGO, LAB_INFO, stats, args.fuzzy_cutoff, output_path=args.html)
             print(f"🌐 HTML report and CSV mapping generated at: {path}")
 
-        print_matches(matches, query_attrs, global_stats=stats, fuzzy_cutoff=args.fuzzy_cutoff)
+        # 2. Handle Text Output (File or Screen)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                original_stdout = sys.stdout
+                sys.stdout = f
+                try:
+                    print_matches(matches, query_attrs, global_stats=stats, fuzzy_cutoff=args.fuzzy_cutoff)
+                finally:
+                    sys.stdout = original_stdout
+            print(f"📄 Text summary saved to: {os.path.abspath(args.output)}")
+        else:
+            print_matches(matches, query_attrs, global_stats=stats, fuzzy_cutoff=args.fuzzy_cutoff)
 
     elif args.command == "delete":
         if args.all:
-            confirm = input("⚠️  Wipe ALL schemas? (y/N): ")
-            if confirm.lower() == 'y' and engine.clear_all_data():
+            if input("⚠️  Wipe ALL schemas? (y/N): ").lower() == 'y':
+                engine.clear_all_data()
                 print("💥 Database wiped.")
         elif args.schema_id:
-            if engine.remove_schema(args.schema_id):
-                print(f"🗑️  Deleted: {args.schema_id}")
-            else:
-                print(f"❌ Deletion failed.")
+            if engine.remove_schema(args.schema_id): print(f"🗑️  Deleted: {args.schema_id}")
 
 if __name__ == "__main__":
     main()

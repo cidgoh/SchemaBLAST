@@ -204,7 +204,8 @@ def generate_html_report(matches, query_attributes, logo_text, lab_info, stats, 
         alignment_details=alignment_details,
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     )
-
+    if not output_path.endswith(".html"):
+        output_path += ".html"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(full_html)
     
