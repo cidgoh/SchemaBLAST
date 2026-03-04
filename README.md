@@ -3,11 +3,6 @@
 **Hsiao Lab**\
 *Centre for Infectious Disease Genomics and One Health (CIDGOH)*
 
-[![GitHub
-Repo](https://img.shields.io/badge/GitHub-schema--prober-blue?logo=github)](https://github.com/cidgoh/schema-prober)\
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)](https://www.python.org/)\
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
 ------------------------------------------------------------------------
 
 ## 📌 Overview
@@ -15,11 +10,11 @@ Repo](https://img.shields.io/badge/GitHub-schema--prober-blue?logo=github)](http
 SchemaBLAST is a Python utility designed for extracting, indexing, and
 auditing data schemas.
 
-It allows researchers to "probe" new datasets against established
-standards (such as OCA or LinkML) using alignment reports to identify:
+It allows researchers to probe new datasets against established
+standards (such as OCA or LinkML) to identify:
 
--   Attribute overlap\
--   Schema similarity\
+-   Attribute overlap
+-   Schema similarity
 -   Critical data gaps
 
 ------------------------------------------------------------------------
@@ -27,11 +22,11 @@ standards (such as OCA or LinkML) using alignment reports to identify:
 ## 🚀 Key Features
 
 -   **Hybrid Alignment Reports** --- Combines exact matches with fuzzy
-    linguistic mapping\
--   **Linguistic Mapping** --- Uses Levenshtein-based fuzzy logic (e.g.,
-    `case_id` ≈ `caseid`)\
--   **Gap Analysis** --- Clearly highlights missing attributes\
--   **Global Database Stats** --- Real-time indexed schema summary\
+    linguistic mapping
+-   **Linguistic Mapping** --- Levenshtein-based fuzzy logic (e.g.,
+    `case_id` ≈ `caseid`)
+-   **Gap Analysis** --- Clearly highlights missing attributes
+-   **Global Database Stats** --- Real-time indexed schema summary
 -   **Flexible Output** --- Terminal summaries, standalone HTML reports,
     and CSV mappings
 
@@ -39,37 +34,29 @@ standards (such as OCA or LinkML) using alignment reports to identify:
 
 ## 📐 Identity Score (Jaccard Similarity)
 
-The Identity Score measures overall schema similarity using **Jaccard
-Similarity (Intersection over Union)**.
+SchemaBLAST uses **Jaccard Similarity (Intersection over Union)** as the
+Identity Score.
 
-    Score = (Attributes in BOTH)
-            --------------------------------------------
-            (Total UNIQUE attributes in EITHER schema)
+Score = (Attributes in BOTH) / (Total UNIQUE attributes in EITHER
+schema)
 
 ### Example
 
--   Query (Q): 117 attributes\
--   Target (T): 143 attributes\
+-   Query (Q): 117 attributes
+-   Target (T): 143 attributes
 -   Common (Q ∩ T): 100 attributes
 
-```{=html}
-<!-- -->
-```
-    Union = 117 + 143 - 100 = 160
-    Score = 100 / 160 = 0.625 (62.5%)
+Union = 117 + 143 - 100 = 160
+Score = 100 / 160 = 0.625 (62.5%)
 
-**Important distinction:**
+**Important:**
 
--   `100 / 117 = 85.5%` → Query coverage\
+-   `100 / 117 = 85.5%` → Query coverage
 -   `100 / 160 = 62.5%` → True schema similarity (Jaccard Score)
-
-SchemaBLAST reports the **Jaccard score as the Identity Score**.
 
 ------------------------------------------------------------------------
 
 ## 📐 Similarity Confidence
-
-Matches are categorized by Identity Score:
 
   Confidence   Identity Score   Interpretation
   ------------ ---------------- ---------------------
@@ -83,7 +70,7 @@ Matches are categorized by Identity Score:
 
 ### Prerequisites
 
--   Python 3.8+\
+-   Python 3.8+
 -   Apache Solr (default: http://localhost:8983)
 
 ### Setup
@@ -96,28 +83,52 @@ pip install -e .
 
 ------------------------------------------------------------------------
 
-## 📖 Usage Examples
+## 📖 Execution Examples
 
-### 1️⃣ Probing with Fuzzy Matching
+### 📥 Upload a Single Schema
 
 ``` bash
-schema-compare probe query.yaml --fuzzy --fuzzy_cutoff 90.0
+schemablast upload all_schema/mpox_schema.yaml
 ```
 
-### 2️⃣ Generate HTML + CSV Reports
+### 📦 Batch Upload Schemas
 
 ``` bash
-# Default output
-schema-compare probe query.yaml --html
-
-# Custom location
-schema-compare probe query.yaml --html exports/mpox_audit.html
+schemablast batch schema_folder
 ```
 
-### 3️⃣ Save Terminal Output
+### 📃 List All Schemas in Database
 
 ``` bash
-schema-compare probe query.yaml -o alignment_summary.txt
+schemablast list
+```
+
+### 🗑 Delete a Specific Schema
+
+``` bash
+schemablast delete schema_cfb4e323bde4
+```
+
+### 🔥 Delete All Schemas
+
+``` bash
+schemablast delete --all
+```
+
+------------------------------------------------------------------------
+
+## 🔍 Probing Examples
+
+### ✅ Perfect Match (Exact Alignment)
+
+``` bash
+schemablast probe query.yaml   -o result_perfect_match.txt   --html result_perfect_match.html   --threshold 0.5
+```
+
+### 🔎 Fuzzy Match (Linguistic Alignment)
+
+``` bash
+schemablast probe query.yaml   -o result_fuzzy.txt   --html result_fuzzy.html   --threshold 0.5   --fuzzy   --fuzzy_cutoff 90
 ```
 
 ------------------------------------------------------------------------
@@ -126,38 +137,12 @@ schema-compare probe query.yaml -o alignment_summary.txt
 
 Each probe report contains:
 
-### 1. Database Stats
-
-Overview of indexed schemas.
-
-### 2. Summary Table
-
-High-level Identity Scores and Confidence.
-
-### 3. Detailed Alignments
-
--   ✅ **Exact Matches**\
--   🔍 **Linguistic Matches**\
--   ❌ **True Gaps**
-
-------------------------------------------------------------------------
-
-## 📝 CLI Reference
-
-  Command           Description
-  ----------------- ------------------------------------
-  `upload <file>`   Index a new schema
-  `list`            List indexed schemas
-  `probe <file>`    Compare local file
-  `delete <id>`     Remove schema (`--all` to wipe DB)
-
-### Probe Flags
-
--   `-o, --output` --- Save text summary\
--   `--html` --- Save HTML report\
--   `--fuzzy` --- Enable fuzzy matching\
--   `--fuzzy_cutoff` --- Sensitivity (0--100)\
--   `--threshold` --- Minimum Identity Score (default: 0.4)
+1.  **Database Stats** --- Overview of indexed schemas\
+2.  **Summary Table** --- Identity scores and confidence levels\
+3.  **Detailed Alignments**
+    -   ✅ Exact Matches\
+    -   🔍 Linguistic Matches\
+    -   ❌ True Gaps
 
 ------------------------------------------------------------------------
 
