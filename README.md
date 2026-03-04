@@ -1,4 +1,4 @@
-# 🧬 SchemaProber: Schema Alignment Tool
+# 🧬 SchemaBLAST: Schema Alignment Tool
 
 **Hsiao Lab**\
 *Centre for Infectious Disease Genomics and One Health (CIDGOH)*
@@ -12,7 +12,7 @@ Repo](https://img.shields.io/badge/GitHub-schema--prober-blue?logo=github)](http
 
 ## 📌 Overview
 
-SchemaProber is a Python utility designed for extracting, indexing, and
+SchemaBLAST is a Python utility designed for extracting, indexing, and
 auditing data schemas.
 
 It allows researchers to "probe" new datasets against established
@@ -63,7 +63,7 @@ Similarity (Intersection over Union)**.
 -   `100 / 117 = 85.5%` → Query coverage\
 -   `100 / 160 = 62.5%` → True schema similarity (Jaccard Score)
 
-SchemaProber reports the **Jaccard score as the Identity Score**.
+SchemaBLAST reports the **Jaccard score as the Identity Score**.
 
 ------------------------------------------------------------------------
 

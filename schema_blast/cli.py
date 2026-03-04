@@ -88,7 +88,7 @@ def print_matches(matches, query_attributes, global_stats=None, fuzzy_cutoff=85.
     print("="*95 + "\n")
 
 def main():
-    parser = argparse.ArgumentParser(prog="schema-compare", description="CIDGOH SchemaProber: CLI tool to index and compare schemas.")
+    parser = argparse.ArgumentParser(prog="schema-compare", description="CIDGOH SchemaBLAST: CLI tool to index and compare schemas.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Upload

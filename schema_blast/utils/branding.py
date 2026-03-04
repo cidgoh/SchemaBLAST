@@ -15,9 +15,9 @@ Faculty of Health Sciences, Simon Fraser University | Blusson Hall
 8888 University Dr., Burnaby, B.C. V5A 1S6
 E-mail: wwhsiao@sfu.ca | Tel: +1-778-782-3299 | Web: www.cidgoh.ca
 """
-version = "0.1"
+version = "0.1.0"
 
-def get_report_header(query_count: int, tool_name: str = "SchemaProber") -> str:
+def get_report_header(query_count: int, tool_name: str = "SchemaBLAST") -> str:
     """Returns the full branded header including contact details."""
     header = LOGO
     header += "\n" + "="*95 + "\n"
