@@ -1,157 +1,126 @@
 # 🧬 SchemaBLAST: Schema Alignment Tool
 
-**Hsiao Lab**\
-*Centre for Infectious Disease Genomics and One Health (CIDGOH)*
+**Hsiao Lab** *Centre for Infectious Disease Genomics and One Health (CIDGOH)*
 
-------------------------------------------------------------------------
+---
 
 ## 📌 Overview
 
-SchemaBLAST is a Python utility designed for extracting, indexing, and
-auditing data schemas.
+**SchemaBLAST** is a CLI tool designed for indexing and aligning metadata schemas. 
 
-It allows researchers to probe new datasets against established
-standards (such as OCA or LinkML) to identify:
+It allows researchers to "BLAST" new datasets against established standards (such as OCA or LinkML) to identify structural overlaps, linguistic similarities, and critical data gaps.
 
--   Attribute overlap
--   Schema similarity
--   Critical data gaps
-
-------------------------------------------------------------------------
+---
 
 ## 🚀 Key Features
 
--   **Hybrid Alignment Reports** --- Combines exact matches with fuzzy
-    linguistic mapping
--   **Linguistic Mapping** --- Levenshtein-based fuzzy logic (e.g.,
-    `case_id` ≈ `caseid`)
--   **Gap Analysis** --- Clearly highlights missing attributes
--   **Global Database Stats** --- Real-time indexed schema summary
--   **Flexible Output** --- Terminal summaries, standalone HTML reports,
-    and CSV mappings
+* **Hybrid Alignment** — Combines exact attribute matches with fuzzy linguistic mapping.
+* **Linguistic Mapping** — Levenshtein-based fuzzy logic (e.g., `case_id` ≈ `caseid`).
+* **Jaccard Identity Scoring** — Mathematical rigor for schema similarity.
+* **Flexible Reporting** — Terminal summaries, standalone HTML reports, and CSV mappings.
 
-------------------------------------------------------------------------
+---
 
 ## 📐 Identity Score (Jaccard Similarity)
 
-SchemaBLAST uses **Jaccard Similarity (Intersection over Union)** as the
-Identity Score.
+SchemaBLAST uses **Jaccard Similarity (Intersection over Union)** as the primary Identity Score.
 
-Score = (Attributes in BOTH) / (Total UNIQUE attributes in EITHER
-schema)
+$$Score = \frac{|Query \cap Target|}{|Query \cup Target|}$$
 
 ### Example
+* **Query (Q):** 117 attributes
+* **Target (T):** 143 attributes
+* **Common (Q ∩ T):** 100 attributes
 
--   Query (Q): 117 attributes
--   Target (T): 143 attributes
--   Common (Q ∩ T): 100 attributes
+**Union** = $117 + 143 - 100 = 160$  
+**Identity Score** = $100 / 160 = 0.625$ (**62.5%**)
 
-Union = 117 + 143 - 100 = 160
-Score = 100 / 160 = 0.625 (62.5%)
 
-**Important:**
+---
 
--   `100 / 117 = 85.5%` → Query coverage
--   `100 / 160 = 62.5%` → True schema similarity (Jaccard Score)
+## 📊 Similarity Confidence
 
-------------------------------------------------------------------------
+| Confidence | Identity Score | Interpretation |
+| :--- | :--- | :--- |
+| **HIGH** | > 75% | Excellent alignment |
+| **MEDIUM** | 40% – 75% | Moderate overlap |
+| **LOW** | < 40% | Poor alignment |
 
-## 📐 Similarity Confidence
-
-  Confidence   Identity Score   Interpretation
-  ------------ ---------------- ---------------------
-  **HIGH**     \> 75%           Excellent alignment
-  **MEDIUM**   40% -- 75%       Moderate overlap
-  **LOW**      \< 40%           Poor alignment
-
-------------------------------------------------------------------------
+---
 
 ## 🛠 Installation
 
 ### Prerequisites
-
--   Python 3.8+
--   Apache Solr (default: http://localhost:8983)
+* Python 3.8+
+* Apache Solr (Running at `http://localhost:8983`)
 
 ### Setup
-
-``` bash
-git clone https://github.com/cidgoh/schema-prober.git
-cd schema-prober
+```bash
+git clone https://github.com/cidgoh/SchemaBLAST.git
+cd SchemaBLAST
 pip install -e .
 ```
 
-------------------------------------------------------------------------
+---
 
-## 📖 Execution Examples
+## 📖 Usage Guide
 
-### 📥 Upload a Single Schema
+### 📂 Database Management
+Manage your local index of standards and schemas.
 
-``` bash
-schemablast upload all_schema/mpox_schema.yaml
+| Action | Command |
+| :--- | :--- |
+| **List** | `schemablast database list` |
+| **Upload File** | `schemablast database upload <file> [-n custom_name]` |
+| **Batch Import** | `schemablast database batch <directory>` |
+| **Delete One** | `schemablast database delete <schema_id>` |
+| **Delete All** | `schemablast database delete --all` |
+
+---
+
+### 🔍 Alignment (The "BLAST" Query)
+Align a query file against the indexed database.
+
+#### ✅ Basic Alignment
+Run a standard alignment and save a text summary.
+```bash
+schemablast align -q query.yaml -o results.txt
 ```
 
-### 📦 Batch Upload Schemas
-
-``` bash
-schemablast batch schema_folder
+#### 🔎 Fuzzy Linguistic Alignment
+Enable fuzzy matching with a custom threshold and generate a visual HTML report.
+```bash
+# -f: fuzzy, -c: fuzzy cutoff (0-100), -t: global threshold (0-1.0), -r: report
+schemablast align -q query.yaml -f -c 90 -t 0.5 -r my_report.html
 ```
 
-### 📃 List All Schemas in Database
-
-``` bash
-schemablast list
+#### 🆔 Internal Database Alignment
+Align one indexed schema against all others in the database using its ID.
+```bash
+schemablast align -i schema_cfb4e323bde4 -f -r internal_comparison.html
 ```
 
-### 🗑 Delete a Specific Schema
+---
 
-``` bash
-schemablast delete schema_cfb4e323bde4
-```
+## 📑 Parameters Reference
 
-### 🔥 Delete All Schemas
+| Short | Long | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `-q` | `--query` | Path to local query file | Required |
+| `-i` | `--id` | Internal Database ID to use as query | Required (if no -q) |
+| `-t` | `--threshold` | Minimum Identity Score to report (0-1.0) | `0.4` |
+| `-l` | `-limit` | Max number of matching schemas to return | `5` |
+| `-f` | `--fuzzy` | Enable Levenshtein-based fuzzy matching | `False` |
+| `-c` | `--cutoff` | Sensitivity for fuzzy matches (0-100) | `85.0` |
+| `-o` | `--output` | Save text summary to a specific file | `Stdout` |
+| `-r` | `--report` | Generate branded HTML report & CSV | `None` |
 
-``` bash
-schemablast delete --all
-```
-
-------------------------------------------------------------------------
-
-## 🔍 Probing Examples
-
-### ✅ Perfect Match (Exact Alignment)
-
-``` bash
-schemablast probe query.yaml   -o result_perfect_match.txt   --html result_perfect_match.html   --threshold 0.5
-```
-
-### 🔎 Fuzzy Match (Linguistic Alignment)
-
-``` bash
-schemablast probe query.yaml   -o result_fuzzy.txt   --html result_fuzzy.html   --threshold 0.5   --fuzzy   --fuzzy_cutoff 90
-```
-
-------------------------------------------------------------------------
-
-## 📊 Alignment Report Structure
-
-Each probe report contains:
-
-1.  **Database Stats** --- Overview of indexed schemas\
-2.  **Summary Table** --- Identity scores and confidence levels\
-3.  **Detailed Alignments**
-    -   ✅ Exact Matches\
-    -   🔍 Linguistic Matches\
-    -   ❌ True Gaps
-
-------------------------------------------------------------------------
+---
 
 ## 🤝 Contact
 
-**Jun Duan**\
-jun_duan@sfu.ca
+**Jun Duan** jun_duan@sfu.ca
 
-**William Hsiao**\
-wwhsiao@sfu.ca
+**William Hsiao** wwhsiao@sfu.ca
 
-Web: https://www.cidgoh.ca/
+**Web:** [www.cidgoh.ca](https://www.cidgoh.ca/)
