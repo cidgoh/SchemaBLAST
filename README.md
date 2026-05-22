@@ -94,6 +94,10 @@ Enable fuzzy matching with a custom threshold and generate a visual HTML report.
 schemablast align -q query.yaml -f -c 90 -t 0.5 -r my_report.html
 ```
 
+#### 📄 Eaxmple Result
+
+![Example Result](examples/result_example.png)
+
 #### 🆔 Internal Database Alignment
 Align one indexed schema against all others in the database using its ID.
 ```bash
