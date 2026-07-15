@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import json
 from datetime import datetime
 from .comparator import ComparatorEngine
 from .utils.branding import get_report_header, LOGO, LAB_INFO
@@ -117,6 +118,7 @@ def main():
     # Output parameters
     align_parser.add_argument("-o", "--output", help="Save text summary to file")
     align_parser.add_argument("-r", "--report", nargs='?', const='report.html', help="Generate HTML report (optional: filename.html)")
+    align_parser.add_argument("--json", action="store_true", help="Output results as JSON (overrides text/HTML output)") 
 
     # ---------------------------------------------------------
     # 2. DATABASE COMMANDS
@@ -164,6 +166,25 @@ def main():
                 args.query, args.format, args.threshold, args.limit, args.fuzzy, args.cutoff
             )
         
+        if args.json:
+            output = {
+                "query_attributes": sorted(list(query_attrs)),
+                "matches": [
+                    {
+                        "target_schema_id": m.target_schema_id,
+                        "target_schema_name": m.target_schema_name,
+                        "similarity_score": m.similarity_score,
+                        "matching_attributes": [
+                            {"query": q, "target": t, "score": s}
+                            for q, t, s in m.matching_attributes
+                        ]
+                    }
+                    for m in matches
+                ]
+            }
+        print(json.dumps(output, indent=2))
+        return  # or sys.exit(0)
+
         # 1. Handle HTML Report Generation (-r / --report)
         if args.report:
             path = generate_html_report(
